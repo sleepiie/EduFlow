@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduFlow</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script defer src="/static/script.js"></script>
+</head>
+<body>
+    <div class="header">
+        <h1 contenteditable="true" class="board-title">English</h1>
+        <div class="user-info">Welcome, {{ username }}</div>
+    </div>
+    <div class="kanban-board">
+        {% for column in columns %}
+        <div class="column" data-column="{{ column.id }}">
+            <h3 contenteditable="true">{{ column.title }}</h3>
+            <div class="dropzone" data-status="{{ column.id }}">
+                {% for card in cards %}
+                    {% if card.column_id == column.id %}
+                    <div class="card" draggable="true" contenteditable="true" data-id="{{ card.id }}">
+                        {{ card.content }}
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            <button class="add-card-btn" onclick="addCard('{{ column.id }}')">Add Card</button>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+</html>
