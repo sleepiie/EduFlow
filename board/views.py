@@ -2,17 +2,27 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from .models import Board, Column, Card, KanbanUser
+from .models import Board, Column, Card, KanbanUser, Category, Topic
 import json
 
+def home_view(request):
+    if request.session.get('user_id'):
+        user = KanbanUser.objects.get(id=request.session['user_id'])
+        return redirect(f'/{user.username}/categories/')
+    return render(request, "board/home.html")
+
 def login_view(request):
+    if request.session.get('user_id'):
+        user = KanbanUser.objects.get(id=request.session['user_id'])
+        return redirect(f'/{user.username}/categories/')
+        
     if request.method == "POST":
         username = request.POST["username"]
         password = request.POST["password"]
         try:
             user = KanbanUser.objects.get(username=username, password=password)
             request.session['user_id'] = user.id
-            return redirect(f'/{username}/board')
+            return redirect(f'/{username}/categories/')
         except KanbanUser.DoesNotExist:
             return render(request, "board/login.html", {"error": "Invalid credentials"})
     return render(request, "board/login.html")
@@ -28,33 +38,111 @@ def register_view(request):
         
         try:
             KanbanUser.objects.create(username=username, password=password)
-            return redirect('/')  # กลับไปหน้า login หลังสมัครสำเร็จ
+            return render(request, "board/register.html", {"success": "สมัครสมาชิกสำเร็จ"})
         except:
             return render(request, "board/register.html", {"error": "ชื่อผู้ใช้นี้มีอยู่แล้ว"})
     
     return render(request, "board/register.html")
 
-def kanban_board(request, username):
+def kanban_board(request, username, topic_id):
     if not request.session.get('user_id'):
         return redirect("/")
-    user = KanbanUser.objects.get(id=request.session['user_id'])
-    if user.username != username:
-        return redirect("/")
-    board, created = Board.objects.get_or_create(user=user)
+        
+    try:
+        user = KanbanUser.objects.get(id=request.session['user_id'])
+        if user.username != username:
+            return redirect("/")
+            
+        topic = Topic.objects.get(id=topic_id)
+        board = Board.objects.get(topic=topic)
+        columns = Column.objects.filter(board=board).order_by('order')
+        cards = Card.objects.filter(column__board=board).order_by('order')
+        
+        return render(request, 'board/board.html', {
+            'topic': topic,
+            'columns': columns,
+            'cards': cards,
+            'username': username
+        })
+        
+    except (Topic.DoesNotExist, Board.DoesNotExist):
+        return redirect('board:categories', username=username)
+
+def category_detail(request, username, category_id):
+    if not request.session.get('user_id'):
+        return redirect('/')
     
-    if created:
-        columns = ['To Do', 'In Progress', 'Done']
+    try:
+        category = Category.objects.get(id=category_id)
+        topics = Topic.objects.filter(category=category)
+        
+        return render(request, 'board/category_detail.html', {
+            'category': category,
+            'topics': topics,
+            'username': username
+        })
+    except Category.DoesNotExist:
+        return redirect('board:categories', username=username)
+
+@csrf_exempt
+def create_topic(request, username, category_id):
+    if request.method == "POST":
+        if not request.session.get('user_id'):
+            return JsonResponse({'status': 'error', 'message': 'Not logged in'})
+        
+        data = json.loads(request.body)
+        topic_name = data.get('name')
+        category = Category.objects.get(id=category_id)
+        
+        topic = Topic.objects.create(
+            category=category,
+            name=topic_name
+        )
+        
+        # สร้าง Board สำหรับ Topic นี้
+        board = Board.objects.create(
+            topic=topic,
+            name=topic_name
+        )
+        
+        # สร้าง Columns สำหรับ Board
+        columns = ['todo', 'doing', 'done']
         for i, title in enumerate(columns):
             Column.objects.create(board=board, title=title, order=i)
+        
+        return JsonResponse({
+            'status': 'success',
+            'topic_id': topic.id,
+            'name': topic.name
+        })
+
+@csrf_exempt
+def create_category(request, username):
+    if request.method == "POST":
+        if not request.session.get('user_id'):
+            return JsonResponse({'status': 'error', 'message': 'Not logged in'})
+        
+        data = json.loads(request.body)
+        category_name = data.get('name')
+        user = KanbanUser.objects.get(id=request.session['user_id'])
+        category = Category.objects.create(user=user, name=category_name)
+        
+        return JsonResponse({
+            'status': 'success',
+            'category_id': category.id,
+            'name': category.name
+        })
     
-    columns = Column.objects.filter(board=board).order_by('order')
-    cards = Card.objects.filter(column__board=board).order_by('order')
+def list_categories(request, username):
+    if not request.session.get('user_id'):
+        return redirect('/')
     
-    return render(request, "board/board.html", {
-        "board": board,
-        "columns": columns,
-        "cards": cards,
-        "username": username
+    user = KanbanUser.objects.get(id=request.session['user_id'])
+    categories = Category.objects.filter(user=user)
+    
+    return render(request, 'board/categories.html', {
+        'categories': categories,
+        'username': username
     })
 
 def update_card(request , username):
@@ -118,3 +206,8 @@ def add_card(request ,username):
             'status': 'error',
             'message': str(e)
         }, status=500)
+    
+def logout_view(request):
+    if request.session.get('user_id'):
+        del request.session['user_id']
+    return redirect('/')

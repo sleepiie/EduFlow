@@ -3,14 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EduFlow</title>
+    <title>EduFlow - {{ topic.name }}</title>
     <link rel="stylesheet" href="/static/style.css">
     <script defer src="/static/script.js"></script>
 </head>
 <body>
     <div class="header">
-        <h1 contenteditable="true" class="board-title">English</h1>
-        <div class="user-info">Welcome, {{ username }}</div>
+        <h1 contenteditable="true" class="board-title">{{ topic.name }}</h1>
+        <div class="user-actions">
+            <span class="user-info">{{ username }}</span>
+            <a href="{% url 'board:logout' %}" class="logout-btn">Logout</a>
+        </div>
     </div>
     <div class="kanban-board">
         {% for column in columns %}

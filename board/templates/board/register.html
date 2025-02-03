@@ -13,7 +13,17 @@
     <div class="login-container">
         <h2>Register</h2>
         {% if error %}
-        <div class="error-message">{{ error }}</div>
+            <div class="error-message">
+                {{ error }}
+            </div>
+        {% endif %}
+        {% if success %}
+            <div class="success-message">
+                {{ success }}
+                <div class="redirect-message">
+                    <a href="{% url 'board:login' %}">คลิกที่นี่เพื่อเข้าสู่ระบบ</a>
+                </div>
+            </div>
         {% endif %}
         <form method="POST">
             {% csrf_token %}
@@ -22,7 +32,9 @@
             <input type="password" name="confirm_password" placeholder="confirm password" required>
             <button type="submit">submit</button>
         </form>
-        <p>มีบัญชีอยู่แล้ว? <a href="/">เข้าสู่ระบบ</a></p>
+        {% if not success %}
+            <p>มีบัญชีอยู่แล้ว? <a href="{% url 'board:login' %}">เข้าสู่ระบบ</a></p>
+        {% endif %}
     </div>
 </body>
 </html>

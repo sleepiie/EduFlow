@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduFlow</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="header">
+        <h1>Categories</h1>
+        <div class="user-actions">
+            <span class="user-info">{{ username }}</span>
+            <a href="{% url 'board:logout' %}" class="logout-btn">Logout</a>
+        </div>
+    </div>
+    
+    <div class="categories-container">
+        {% for category in categories %}
+        <div class="category-card">
+            <a href="/{{ username }}/category/{{ category.id }}/">{{ category.name }}</a>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="action-buttons">
+        <button id="create-category-button" onclick="createCategory()">Create Category</button>
+    </div>
+
+    <script>
+    function createCategory() {
+        const name = prompt("Enter category name:");
+        if (name) {
+            fetch('/{{ username }}/create-category/', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ name: name })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    window.location.reload();
+                }
+            });
+        }
+    }
+    </script>
+</body>
+</html>

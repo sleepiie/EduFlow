@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduFlow</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="header">
+        <h1>{{ category.name }}</h1>
+        <div class="user-actions">
+            <span class="user-info">{{ username }}</span>
+            <a href="{% url 'board:logout' %}" class="logout-btn">Logout</a>
+        </div>
+    </div>
+    
+    <div class="topics-container">
+        {% for topic in topics %}
+        <div class="topic-card">
+            <a href="/{{ username }}/topic/{{ topic.id }}/board/">{{ topic.name }}</a>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="action-buttons">
+        <button class="add-topic-button" onclick="createTopic()">Create Board</button>
+    </div>
+
+    <script>
+    function createTopic() {
+        const name = prompt("Enter topic name:");
+        if (name) {
+            fetch('/{{ username }}/category/{{ category.id }}/create-topic/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name: name })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    window.location.reload();
+                }
+            });
+        }
+    }
+    </script>
+</body>
+</html>

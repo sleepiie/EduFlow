@@ -7,12 +7,21 @@ class KanbanUser(models.Model):
     def __str__(self):
         return self.username
 
-class Board(models.Model):
+
+class Category(models.Model):
     user = models.ForeignKey(KanbanUser, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
 
-    def __str__(self):
-        return f"{self.name} - {self.user.username}"
+class Topic(models.Model):
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="topics")
+    name = models.CharField(max_length=100)
+
+# แก้ไขโมเดล Board
+class Board(models.Model):
+    topic = models.OneToOneField(Topic, on_delete=models.CASCADE, related_name="board")
+    name = models.CharField(max_length=100)
+
+
 
 class Column(models.Model):
     board = models.ForeignKey(Board, on_delete=models.CASCADE, related_name="columns")
