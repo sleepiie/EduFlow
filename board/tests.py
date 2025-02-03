@@ -1,7 +1,7 @@
 from django.test import TestCase , Client
 from django.urls import reverse 
 from django.http import HttpRequest 
-from board.models import KanbanUser,Category
+from board.models import KanbanUser,Category,Topic
 
 # Create your tests here.
 class Login_test(TestCase):
@@ -33,3 +33,15 @@ class CategoryModelTest(TestCase):
         # ตรวจสอบว่าหมวดหมู่ถูกสร้างถูกต้องหรือไม่
         self.assertEqual(category.name, "Test Category")
         self.assertEqual(category.user.username, "testuser")
+
+class TopicModelTest(TestCase):
+    def setUp(self):
+        self.user = KanbanUser.objects.create(username="testuser", password="testpass123")
+        self.category = Category.objects.create(user=self.user, name="Test Category")
+
+    def test_create_topic(self):
+        topic = Topic.objects.create(category=self.category, name="Test Topic")
+        
+
+        self.assertEqual(topic.name, "Test Topic")
+        self.assertEqual(topic.category.name, "Test Category")
