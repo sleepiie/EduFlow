@@ -33,7 +33,7 @@ class usertest(LiveServerTestCase):
         self.assertTrue(
             self.browser.find_element(By.CLASS_NAME, 'register-btn').is_displayed()
         )
-        time.sleep(2)
+        time.sleep(1)
 
     def test_can_register(self):
         #แทนลองกดปุ่ม login
@@ -50,8 +50,8 @@ class usertest(LiveServerTestCase):
         confirm_password_input = self.browser.find_element(By.NAME, 'confirm_password')
 
         username_input.send_keys('tanny')
-        password_input.send_keys('11223344')
-        confirm_password_input.send_keys('11223344')
+        password_input.send_keys('GJK67891P4R')
+        confirm_password_input.send_keys('GJK67891P4R')
 
         self.browser.find_element(By.TAG_NAME, 'button').click()
 
@@ -60,10 +60,10 @@ class usertest(LiveServerTestCase):
         )
         self.assertIn('สมัครสมาชิกสำเร็จ', success_message.text)
 
-        time.sleep(2)      
+        time.sleep(1)      
     
     def test_can_login(self):
-        KanbanUser.objects.create(username='tanny', password='11223344')
+        KanbanUser.objects.create(username='tanny', password='GJK67891P4R')
 
         #แทนกลับไปยังหน้าล็อกอินแล้วใส่ username และ password
         self.browser.get(f"{self.live_server_url}/login/")
@@ -73,7 +73,7 @@ class usertest(LiveServerTestCase):
         password_input = self.browser.find_element(By.NAME, 'password')
 
         username_input.send_keys('tanny')
-        password_input.send_keys('11223344')
+        password_input.send_keys('GJK67891P4R')
         self.browser.find_element(By.TAG_NAME, 'button').click()
 
         #หน้าเว็บเปลี่ยนไปยังหน้าหลัก โดยมีด้านขวาบนแสดงชื่อ username และมีปุ่มสำหรับสร้างหมวดหมู่
@@ -82,15 +82,15 @@ class usertest(LiveServerTestCase):
         )
         self.assertEqual('tanny', user_info.text)
         self.assertIn('Create Category', self.browser.find_element(By.CLASS_NAME, 'action-buttons').text)
-        time.sleep(2)
+        time.sleep(1)
 
     def test_core_feature(self):
-        user = KanbanUser.objects.create(username='tanny', password='11223344')
+        user = KanbanUser.objects.create(username='tanny', password='GJK67891P4R')
         self.browser.get(f"{self.live_server_url}/login/")
         username_input = self.browser.find_element(By.NAME, 'username')
         password_input = self.browser.find_element(By.NAME, 'password')
         username_input.send_keys('tanny')
-        password_input.send_keys('11223344')
+        password_input.send_keys('GJK67891P4R')
         self.browser.find_element(By.TAG_NAME, 'button').click()
 
         #แทนกดสร้างหมวดหมู่
@@ -140,7 +140,60 @@ class usertest(LiveServerTestCase):
         self.assertIn('doing', column_titles)
         self.assertIn('done', column_titles)
 
-        time.sleep(2)
-    
+        #ทดสอบการแก้ไข task
+        first_column = WebDriverWait(self.browser, 10).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "column"))
+        )
+        add_task_btn = first_column.find_element(By.CLASS_NAME, "add-card-btn")
+        add_task_btn.click()
+
+        #กดปุ่มสร้าง task
+        new_task = WebDriverWait(first_column, 10).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "card"))
+        )
+
+        new_task.click()
+
+        #รอ modal ขึ้นมา
+        modal = WebDriverWait(self.browser, 10).until(
+            EC.visibility_of_element_located((By.ID, "card-modal"))
+        )
+
+        #กรอกข้อมูลใน modal
+        title_input = self.browser.find_element(By.ID, "card-title")
+        content_textarea = self.browser.find_element(By.ID, "card-content")
+        due_date_input = self.browser.find_element(By.ID, "card-due-date")
+
+        title_input.clear()
+        title_input.send_keys("Test Card")
+        content_textarea.clear()
+        content_textarea.send_keys("This is test detail")
+        due_date_input.clear()
+        self.browser.execute_script("arguments[0].value = '2025-02-17';", due_date_input)
+        self.browser.execute_script("arguments[0].dispatchEvent(new Event('change'));", due_date_input)
+
+        #กด save
+        save_button = self.browser.find_element(By.ID, "save-card")
+        save_button.click()
+
+        time.sleep(1)
+        #เปิด modal อีกครั้ง
+        new_task.click()
+        modal = WebDriverWait(self.browser, 10).until(
+            EC.visibility_of_element_located((By.ID, "card-modal"))
+        )
+
+        #เช็คข้อมูลว่าตรงกับที่กรอกไหม
+        updated_title = self.browser.find_element(By.ID, "card-title").get_attribute("value")
+        updated_content = self.browser.find_element(By.ID, "card-content").get_attribute("value")
+        updated_due_date = self.browser.find_element(By.ID, "card-due-date").get_attribute("value")
+
+        self.assertEqual(updated_title, "Test Card")
+        self.assertEqual(updated_content, "This is test detail")
+        self.assertEqual(updated_due_date, "2025-02-17")
+
+
+        time.sleep(1)
+
 
         

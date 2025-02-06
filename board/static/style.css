@@ -294,3 +294,76 @@ button {
 button:hover {
     background-color: #0056b3;
 }
+
+
+.modal {
+    display: none; /* ซ่อน modal โดยเริ่มต้น */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
+  }
+  
+.modal-content {
+    background-color: #fefefe;
+    margin: 10% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 500px;
+    border-radius: 5px;
+    position: relative;
+}
+  
+.modal-content h2 {
+    margin-top: 0;
+}
+  
+.modal-content input[type="text"],
+.modal-content input[type="date"],
+.modal-content textarea {
+    width: 100%;
+    padding: 8px;
+    margin: 8px 0 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+  
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+  
+.modal-content .close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    cursor: pointer;
+}
+  
+  /* ตัวอย่างสำหรับ due date ที่เหลือน้อยกว่า 5 วัน */
+.due-date {
+    font-size: 0.9em;
+    margin-top: 5px;
+}
+#card-content {
+    height: 100px; 
+}
+#delete-card {
+    background-color: #d9554c;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+  
+#delete-card:hover {
+    background-color: #b32a20;
+}

@@ -1,9 +1,9 @@
 from django.shortcuts import render, redirect
+import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from .models import Board, Column, Card, KanbanUser, Category, Topic
-import json
 
 def home_view(request):
     if request.session.get('user_id'):
@@ -145,6 +145,26 @@ def list_categories(request, username):
         'username': username
     })
 
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def edit_card(request, username):
+    try:
+        data = json.loads(request.body)
+        card_id = data.get('cardId')
+        title = data.get('title')
+        content = data.get('content')
+        due_date = data.get('dueDate')  # คาดว่ารูปแบบเป็น 'YYYY-MM-DD'
+        card = Card.objects.get(id=card_id)
+        card.title = title
+        card.content = content
+        card.due_date = due_date if due_date != "" else None
+        card.save()
+        return JsonResponse({'status': 'success'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    
+
 def update_card(request , username):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -185,7 +205,8 @@ def add_card(request ,username):
         # Create new card
         card = Card.objects.create(
             column=column,
-            content=content,
+            title=content,   
+            content="",
             order=last_order
         )
         
@@ -206,6 +227,18 @@ def add_card(request ,username):
             'status': 'error',
             'message': str(e)
         }, status=500)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def delete_card(request, username):
+    try:
+        data = json.loads(request.body)
+        card_id = data.get('cardId')
+        card = Card.objects.get(id=card_id)
+        card.delete()
+        return JsonResponse({'status': 'success'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
     
 def logout_view(request):
     if request.session.get('user_id'):

@@ -16,6 +16,21 @@ document.addEventListener('DOMContentLoaded', () => {
         dropzone.addEventListener('dragleave', dragLeave);
         dropzone.addEventListener('drop', drop);
     });
+
+    // ตรวจสอบ due date ของแต่ละ card
+    const dueElements = document.querySelectorAll('.due-date');
+    dueElements.forEach(el => {
+        const dueStr = el.dataset.due;
+        if(dueStr){
+            const dueDate = new Date(dueStr);
+            const today = new Date();
+            const diffTime = dueDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            if(diffDays < 5){
+                el.style.color = "red";
+            }
+        }
+    });
 });
 
 function dragStart(e) {
@@ -49,9 +64,9 @@ async function drop(e) {
     
     dropzone.appendChild(card);
 
-    // Update in database
+    // Update in database (ตำแหน่ง card)
     try {
-        const response = await fetch(`/${username}/update-card/` , {
+        const response = await fetch(`/${username}/update-card/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -76,7 +91,7 @@ async function addCard(columnId) {
     const content = 'New Task';
     
     try {
-        const response = await fetch(`/${username}/add-card/` , {
+        const response = await fetch(`/${username}/add-card/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -98,14 +113,113 @@ async function addCard(columnId) {
         const newCard = document.createElement('div');
         newCard.className = 'card';
         newCard.draggable = true;
-        newCard.contentEditable = true;
         newCard.dataset.id = data.cardId;
-        newCard.textContent = content;
+        newCard.dataset.title = content;
+        newCard.dataset.content = "";
+        newCard.dataset.due_date = "";
+        newCard.innerHTML = `<strong>${content}</strong><div class="due-date"></div>`;
         
         newCard.addEventListener('dragstart', dragStart);
         newCard.addEventListener('dragend', dragEnd);
+        newCard.addEventListener('click', function() {
+            openCardModal(newCard);
+        });
         
         dropzone.appendChild(newCard);
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+// Modal functions
+function openCardModal(cardElement) {
+    const modal = document.getElementById('card-modal');
+    modal.style.display = "block";
+
+    // กำหนดค่าลงในฟอร์ม modal จาก data attributes ของ card
+    document.getElementById('modal-card-id').value = cardElement.dataset.id;
+    document.getElementById('card-title').value = cardElement.dataset.title;
+    document.getElementById('card-content').value = cardElement.dataset.content;
+    document.getElementById('card-due-date').value = cardElement.dataset.due_date;
+}
+
+function closeCardModal() {
+    const modal = document.getElementById('card-modal');
+    modal.style.display = "none";
+}
+
+async function saveCardChanges() {
+    const cardId = document.getElementById('modal-card-id').value;
+    const title = document.getElementById('card-title').value;
+    const content = document.getElementById('card-content').value;
+    const dueDate = document.getElementById('card-due-date').value;
+
+    try {
+        const response = await fetch(`/${username}/edit-card/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                cardId: cardId,
+                title: title,
+                content: content,
+                dueDate: dueDate
+            })
+        });
+        const result = await response.json();
+        if(result.status === "success"){
+            // อัปเดตข้อมูลใน element ของ card ที่แสดงใน board
+            const cardElement = document.querySelector(`.card[data-id="${cardId}"]`);
+            cardElement.dataset.title = title;
+            cardElement.dataset.content = content;
+            cardElement.dataset.due_date = dueDate;
+            cardElement.innerHTML = `<strong>${title}</strong><div class="due-date" data-due="${dueDate}">${ dueDate ? "Due: " + dueDate : "" }</div>`;
+            // ตรวจสอบ due date ใหม่
+            const dueEl = cardElement.querySelector('.due-date');
+            if(dueDate){
+                const dueDt = new Date(dueDate);
+                const today = new Date();
+                const diffTime = dueDt - today;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                if(diffDays < 5){
+                    dueEl.style.color = "red";
+                } else {
+                    dueEl.style.color = "";
+                }
+            }
+            closeCardModal();
+        } else {
+            alert("Error: " + result.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+async function deleteCard() {
+    const cardId = document.getElementById('modal-card-id').value;
+    try {
+        const response = await fetch(`/${username}/delete-card/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                cardId: cardId
+            })
+        });
+        const result = await response.json();
+        if(result.status === "success"){
+            // ลบ element card ออกจากหน้า board
+            const cardElement = document.querySelector(`.card[data-id="${cardId}"]`);
+            cardElement.parentNode.removeChild(cardElement);
+            closeCardModal();
+        } else {
+            alert("Error: " + result.message);
+        }
     } catch (error) {
         console.error('Error:', error);
     }

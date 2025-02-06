@@ -1,36 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EduFlow - {{ topic.name }}</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <script defer src="/static/script.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduFlow - {{ topic.name }}</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script defer src="/static/script.js"></script>
 </head>
 <body>
-    <div class="header">
-        <h1 contenteditable="true" class="board-title">{{ topic.name }}</h1>
-        <div class="user-actions">
-            <span class="user-info">{{ username }}</span>
-            <a href="{% url 'board:logout' %}" class="logout-btn">Logout</a>
+  <div class="header">
+      <h1 contenteditable="true" class="board-title">{{ topic.name }}</h1>
+      <div class="user-actions">
+          <span class="user-info">{{ username }}</span>
+          <a href="{% url 'board:logout' %}" class="logout-btn">Logout</a>
+      </div>
+  </div>
+  <div class="kanban-board">
+      {% for column in columns %}
+      <div class="column" data-column="{{ column.id }}">
+          <h3 contenteditable="true">{{ column.title }}</h3>
+          <div class="dropzone" data-status="{{ column.id }}">
+              {% for card in cards %}
+                  {% if card.column_id == column.id %}
+                  <div class="card" draggable="true"
+                       data-id="{{ card.id }}"
+                       data-title="{{ card.title }}"
+                       data-content="{{ card.content }}"
+                       data-due_date="{{ card.due_date|default_if_none:'' }}"
+                       onclick="openCardModal(this)">
+                      <strong>{{ card.title }}</strong>
+                      <div class="due-date" data-due="{{ card.due_date|default_if_none:'' }}">
+                        {% if card.due_date %}Due: {{ card.due_date }}{% endif %}
+                      </div>
+                  </div>
+                  {% endif %}
+              {% endfor %}
+          </div>
+          <button class="add-card-btn" onclick="addCard('{{ column.id }}')">Add Task</button>
+      </div>
+      {% endfor %}
+  </div>
+
+  <!-- Modal สำหรับแก้ไข card -->
+  <div id="card-modal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeCardModal()">&times;</span>
+        <h2>Edit Task</h2>
+        <input type="hidden" id="modal-card-id">
+        <label for="card-title">Title</label>
+        <input type="text" id="card-title">
+        <label for="card-content">Details</label>
+        <textarea id="card-content"></textarea>
+        <label for="card-due-date">Due Date</label>
+        <input type="date" id="card-due-date">
+        <div class="modal-actions">
+            <button id="save-card"  onclick="saveCardChanges()">Save</button>
+            <button id="delete-card" onclick="deleteCard()">Delete</button>
         </div>
     </div>
-    <div class="kanban-board">
-        {% for column in columns %}
-        <div class="column" data-column="{{ column.id }}">
-            <h3 contenteditable="true">{{ column.title }}</h3>
-            <div class="dropzone" data-status="{{ column.id }}">
-                {% for card in cards %}
-                    {% if card.column_id == column.id %}
-                    <div class="card" draggable="true" contenteditable="true" data-id="{{ card.id }}">
-                        {{ card.content }}
-                    </div>
-                    {% endif %}
-                {% endfor %}
-            </div>
-            <button class="add-card-btn" onclick="addCard('{{ column.id }}')">Add Card</button>
-        </div>
-        {% endfor %}
-    </div>
+  </div>
+
 </body>
 </html>

@@ -33,11 +33,13 @@ class Column(models.Model):
 
 class Card(models.Model):
     column = models.ForeignKey(Column, on_delete=models.CASCADE, related_name="cards")
-    content = models.TextField()
+    title = models.CharField(max_length=200, default="New Card")  # ฟิลด์ใหม่สำหรับชื่อ card
+    content = models.TextField(blank=True)  # รายละเอียด card (สามารถเว้นว่างได้)
     order = models.IntegerField()
+    due_date = models.DateField(null=True, blank=True)  # ฟิลด์ due date
 
     def __str__(self):
-        return f"{self.content[:20]}... - {self.column.title}"
+        return f"{self.title} - {self.column.title}"
 
     class Meta:
         ordering = ['order']

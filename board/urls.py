@@ -2,8 +2,8 @@ from django.urls import path
 
 from . import views
 
+app_name = "board"
 
-app_name = "board" #เพิ่ม namespace สำหรับแอป note
 urlpatterns = [
     path('', views.home_view, name='home'),
     path('login/', views.login_view, name='login'),
@@ -15,5 +15,7 @@ urlpatterns = [
     path('<str:username>/topic/<int:topic_id>/board/', views.kanban_board, name='board'),
     path('<str:username>/add-card/', views.add_card, name='add_card'),
     path('<str:username>/update-card/', views.update_card, name='update_card'),
+    path('<str:username>/edit-card/', views.edit_card, name='edit_card'),
+    path('<str:username>/delete-card/', views.delete_card, name='delete_card'),
     path('logout/', views.logout_view, name='logout'),
 ]
