@@ -3,7 +3,7 @@ import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from .models import Board, Column, Card, KanbanUser, Category, Topic
+from .models import Board, Column, Card, KanbanUser, Category, Topic ,SubTask
 
 def home_view(request):
     if request.session.get('user_id'):
@@ -227,6 +227,72 @@ def add_card(request ,username):
             'status': 'error',
             'message': str(e)
         }, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def get_subtasks(request, username, card_id):
+    try:
+        card = Card.objects.get(id=card_id)
+        subtasks = card.subtasks.all().order_by('order')
+        data = []
+        for st in subtasks:
+            data.append({
+                'id': st.id,
+                'title': st.title,
+                'completed': st.completed,
+            })
+        return JsonResponse({'status': 'success', 'subtasks': data})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)})
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def add_subtask(request, username):
+    try:
+        data = json.loads(request.body)
+        card_id = data.get('cardId')
+        title = data.get('title')
+        card = Card.objects.get(id=card_id)
+        last_order = card.subtasks.count()
+        subtask = SubTask.objects.create(card=card, title=title, order=last_order)
+        return JsonResponse({'status': 'success', 'subtask': {
+            'id': subtask.id,
+            'title': subtask.title,
+            'completed': subtask.completed,
+        }})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def toggle_subtask(request, username):
+    try:
+        data = json.loads(request.body)
+        subtask_id = data.get('subtaskId')
+        completed = data.get('completed')
+        subtask = SubTask.objects.get(id=subtask_id)
+        subtask.completed = completed
+        subtask.save()
+        return JsonResponse({'status': 'success'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def delete_subtask(request, username):
+    try:
+        data = json.loads(request.body)
+        subtask_id = data.get('subtaskId')
+        subtask = SubTask.objects.get(id=subtask_id)
+        subtask.delete()
+        return JsonResponse({'status': 'success'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
 
 @csrf_exempt
 @require_http_methods(["POST"])

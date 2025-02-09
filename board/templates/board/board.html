@@ -9,7 +9,7 @@
 </head>
 <body>
   <div class="header">
-      <h1 contenteditable="true" class="board-title">{{ topic.name }}</h1>
+      <h1 class="board-title">{{ topic.name }}</h1>
       <div class="user-actions">
           <span class="user-info">{{ username }}</span>
           <a href="{% url 'board:logout' %}" class="logout-btn">Logout</a>
@@ -18,7 +18,7 @@
   <div class="kanban-board">
       {% for column in columns %}
       <div class="column" data-column="{{ column.id }}">
-          <h3 contenteditable="true">{{ column.title }}</h3>
+          <h3>{{ column.title }}</h3>
           <div class="dropzone" data-status="{{ column.id }}">
               {% for card in cards %}
                   {% if card.column_id == column.id %}
@@ -41,7 +41,7 @@
       {% endfor %}
   </div>
 
-  <!-- Modal สำหรับแก้ไข card -->
+
   <div id="card-modal" class="modal">
     <div class="modal-content">
         <span class="close" onclick="closeCardModal()">&times;</span>
@@ -51,8 +51,23 @@
         <input type="text" id="card-title">
         <label for="card-content">Details</label>
         <textarea id="card-content"></textarea>
+
+
+        <div>
+            <label for="subtasks">Subtasks</label>
+            <div id="subtasks-container">
+                <!-- รายการ subtasks ที่ถูกโหลดจะอยู่ที่นี่ -->
+            </div>
+            <div id="subtask-add-container">
+                <input type="text" id="new-subtask-input" placeholder="New Subtask" style="display: none;">
+                <button id="add-subtask-btn" onclick="handleSubtaskButtonClick()">Add Subtask</button>
+            </div>
+        </div>
+
+
         <label for="card-due-date">Due Date</label>
         <input type="date" id="card-due-date">
+        
         <div class="modal-actions">
             <button id="save-card"  onclick="saveCardChanges()">Save</button>
             <button id="delete-card" onclick="deleteCard()">Delete</button>

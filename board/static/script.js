@@ -141,12 +141,183 @@ function openCardModal(cardElement) {
     document.getElementById('card-title').value = cardElement.dataset.title;
     document.getElementById('card-content').value = cardElement.dataset.content;
     document.getElementById('card-due-date').value = cardElement.dataset.due_date;
+
+    // โหลด subtasks สำหรับ card นี้
+    loadSubtasks(cardElement.dataset.id);
 }
 
 function closeCardModal() {
     const modal = document.getElementById('card-modal');
     modal.style.display = "none";
 }
+
+
+function loadSubtasks(cardId) {
+    fetch(`/${username}/get-subtasks/${cardId}/`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.status === 'success'){
+            const container = document.getElementById('subtasks-container');
+            container.innerHTML = '';
+            data.subtasks.forEach(st => {
+                const div = document.createElement('div');
+                div.className = 'subtask-item';
+                // สร้างโครงสร้าง HTML สำหรับ subtask พร้อม checkbox, ชื่อ และไอคอนถังขยะ
+                div.innerHTML = `
+                    <input type="checkbox" data-subtask-id="${st.id}" ${st.completed ? 'checked' : ''} onchange="toggleSubtask(this)">
+                    <span class="subtask-title ${st.completed ? 'completed' : ''}">${st.title}</span>
+                    <span class="delete-subtask-icon" onclick="deleteSubtask(${st.id})">&#128465;</span>
+                `;
+                container.appendChild(div);
+            });
+        } else {
+            console.error(data.message);
+        }
+    })
+    .catch(error => console.error('Error loading subtasks:', error));
+}
+
+
+
+function deleteSubtask(subtaskId) {
+    if(confirm("คุณแน่ใจหรือไม่ที่จะลบ subtask นี้?")) {
+        fetch(`/${username}/delete-subtask/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ subtaskId: subtaskId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.status === 'success'){
+                const cardId = document.getElementById('modal-card-id').value;
+                loadSubtasks(cardId);
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => console.error('Error deleting subtask:', error));
+    }
+}
+
+
+function addSubtask() {
+    const cardId = document.getElementById('modal-card-id').value;
+    const input = document.getElementById('new-subtask-input');
+    const title = input.value.trim();
+    if(!title){
+        alert("Please enter subtask title");
+        return;
+    }
+    fetch(`/${username}/add-subtask/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            cardId: cardId,
+            title: title
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.status === 'success'){
+            // Reload subtasks
+            loadSubtasks(cardId);
+            input.value = '';
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => console.error('Error adding subtask:', error));
+}
+
+
+function handleSubtaskButtonClick() {
+    const input = document.getElementById('new-subtask-input');
+    const button = document.getElementById('add-subtask-btn');
+
+    // ถ้า input field ยังไม่แสดงอยู่ ให้แสดง input field แล้วเปลี่ยนข้อความปุ่มเป็น "Save Subtask"
+    if (input.style.display === 'none' || input.style.display === '') {
+        input.style.display = 'block';
+        input.focus();
+        button.textContent = 'Save';
+    } else {
+        // เมื่อ input field แสดงอยู่แล้ว ให้บันทึก subtask
+        const cardId = document.getElementById('modal-card-id').value;
+        const title = input.value.trim();
+        if (!title) {
+            alert("Please enter subtask title");
+            return;
+        }
+        fetch(`/${username}/add-subtask/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                cardId: cardId,
+                title: title
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Reload subtasks หลังบันทึกสำเร็จ
+                loadSubtasks(cardId);
+                // Reset input field และเปลี่ยนปุ่มกลับเป็น "Add Subtask"
+                input.value = '';
+                input.style.display = 'none';
+                button.textContent = 'Add Subtask';
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => console.error('Error adding subtask:', error));
+    }
+}
+
+
+function toggleSubtask(checkbox) {
+    const subtaskId = checkbox.dataset.subtaskId;
+    const completed = checkbox.checked;
+    fetch(`/${username}/toggle-subtask/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            subtaskId: subtaskId,
+            completed: completed
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.status === 'success'){
+            const span = checkbox.nextElementSibling;
+            if(completed){
+                span.style.textDecoration = 'line-through';
+            } else {
+                span.style.textDecoration = 'none';
+            }
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => console.error('Error toggling subtask:', error));
+}
+
 
 async function saveCardChanges() {
     const cardId = document.getElementById('modal-card-id').value;

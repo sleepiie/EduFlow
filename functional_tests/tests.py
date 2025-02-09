@@ -163,7 +163,9 @@ class usertest(LiveServerTestCase):
         title_input = self.browser.find_element(By.ID, "card-title")
         content_textarea = self.browser.find_element(By.ID, "card-content")
         due_date_input = self.browser.find_element(By.ID, "card-due-date")
-
+        subtask_add_btn = self.browser.find_element(By.ID , "add-subtask-btn")
+        
+        #กรอกข้อมูล task
         title_input.clear()
         title_input.send_keys("Test Card")
         content_textarea.clear()
@@ -171,6 +173,13 @@ class usertest(LiveServerTestCase):
         due_date_input.clear()
         self.browser.execute_script("arguments[0].value = '2025-02-17';", due_date_input)
         self.browser.execute_script("arguments[0].dispatchEvent(new Event('change'));", due_date_input)
+        #กรอกข้อมูล subtask
+        subtask_add_btn.click()
+        subtask_input = WebDriverWait(self.browser, 10).until(
+            EC.visibility_of_element_located((By.ID, "new-subtask-input"))
+        )
+        subtask_input.send_keys("test subtask")
+        subtask_add_btn.click()
 
         #กด save
         save_button = self.browser.find_element(By.ID, "save-card")
@@ -187,13 +196,81 @@ class usertest(LiveServerTestCase):
         updated_title = self.browser.find_element(By.ID, "card-title").get_attribute("value")
         updated_content = self.browser.find_element(By.ID, "card-content").get_attribute("value")
         updated_due_date = self.browser.find_element(By.ID, "card-due-date").get_attribute("value")
+        update_subtask = self.browser.find_element(By.CSS_SELECTOR, "#subtasks-container .subtask-item .subtask-title").text
+
 
         self.assertEqual(updated_title, "Test Card")
         self.assertEqual(updated_content, "This is test detail")
         self.assertEqual(updated_due_date, "2025-02-17")
+        self.assertEqual(update_subtask, "test subtask")
 
+        save_button.click()
+        WebDriverWait(self.browser, 10).until(
+            EC.invisibility_of_element_located((By.ID, "card-modal"))
+        )
+
+
+        #ทดสอบแก้ไข task detail
+        new_task.click()
+        modal = WebDriverWait(self.browser, 10).until(
+            EC.visibility_of_element_located((By.ID, "card-modal"))
+        )
+
+        #แก้ไขข้อมูลใน task
+        title_input.clear()
+        title_input.send_keys("Test Edit")
+        content_textarea.clear()
+        content_textarea.send_keys("This is test edit")
+        due_date_input.clear()
+        self.browser.execute_script("arguments[0].value = '2025-03-16';", due_date_input)
+        self.browser.execute_script("arguments[0].dispatchEvent(new Event('change'));", due_date_input)
+        
+        #ลบ subtask
+        subtask_delete = self.browser.find_element(By.CSS_SELECTOR , ".delete-subtask-icon")
+        subtask_delete.click()
+        WebDriverWait(self.browser, 10).until(EC.alert_is_present())
+        alert = self.browser.switch_to.alert
+        alert.accept()
+        WebDriverWait(self.browser, 10).until(
+            EC.invisibility_of_element_located((By.CSS_SELECTOR , "#subtasks-container .subtask-item"))
+        )
+        time.sleep(1)
+        save_button.click()
+        time.sleep(1)
+
+        #เปิด modal อีกครั้งเพื่อเช็คว่าข้อมูลที่แก้ไปถูกต้อง
+        new_task.click()
+        modal = WebDriverWait(self.browser, 10).until(
+            EC.visibility_of_element_located((By.ID, "card-modal"))
+        )
+
+        updated_title = self.browser.find_element(By.ID, "card-title").get_attribute("value")
+        updated_content = self.browser.find_element(By.ID, "card-content").get_attribute("value")
+        updated_due_date = self.browser.find_element(By.ID, "card-due-date").get_attribute("value")
+        update_subtask = self.browser.find_elements(By.CSS_SELECTOR, "#subtasks-container .subtask-item")
+
+
+        self.assertEqual(updated_title, "Test Edit")
+        self.assertEqual(updated_content, "This is test edit")
+        self.assertEqual(updated_due_date, "2025-03-16")
+        self.assertEqual(len(update_subtask), 0)
 
         time.sleep(1)
+
+
+        #ทดสอบลบ task
+        delete_task_btn = self.browser.find_element(By.ID , "delete-card")
+        delete_task_btn.click()
+
+        WebDriverWait(self.browser, 10).until(
+            EC.invisibility_of_element_located((By.ID , "card-modal"))
+        )
+
+        tasks = self.browser.find_elements(By.CLASS_NAME, "card")
+        self.assertEqual(len(tasks), 0)
+
+        time.sleep(1)
+
 
 
         

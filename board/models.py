@@ -43,3 +43,15 @@ class Card(models.Model):
 
     class Meta:
         ordering = ['order']
+
+class SubTask(models.Model):
+    card = models.ForeignKey(Card, on_delete=models.CASCADE, related_name='subtasks')
+    title = models.CharField(max_length=200)
+    completed = models.BooleanField(default=False)
+    order = models.IntegerField(default=0)
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        ordering = ['order']

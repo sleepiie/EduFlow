@@ -16,6 +16,10 @@ urlpatterns = [
     path('<str:username>/add-card/', views.add_card, name='add_card'),
     path('<str:username>/update-card/', views.update_card, name='update_card'),
     path('<str:username>/edit-card/', views.edit_card, name='edit_card'),
+    path('<str:username>/get-subtasks/<int:card_id>/', views.get_subtasks, name='get_subtasks'),
+    path('<str:username>/add-subtask/', views.add_subtask, name='add_subtask'),
+    path('<str:username>/toggle-subtask/', views.toggle_subtask, name='toggle_subtask'),
+    path('<str:username>/delete-subtask/', views.delete_subtask, name='delete_subtask'),
     path('<str:username>/delete-card/', views.delete_card, name='delete_card'),
     path('logout/', views.logout_view, name='logout'),
 ]
