@@ -1,7 +1,7 @@
 from django.test import TestCase , Client
 from django.urls import reverse 
 from django.http import HttpRequest 
-from board.models import KanbanUser,Category,Topic
+from board.models import KanbanUser,Category,Topic ,Board , Column
 
 # Create your tests here.
 class Login_test(TestCase):
@@ -45,3 +45,31 @@ class TopicModelTest(TestCase):
 
         self.assertEqual(topic.name, "Test Topic")
         self.assertEqual(topic.category.name, "Test Category")
+
+
+class BoardModelTest(TestCase):
+    def setUp(self):
+        self.user = KanbanUser.objects.create(username="testuser", password="testpass123")
+        self.category = Category.objects.create(user=self.user, name="Test Category")
+        self.topic = Topic.objects.create(category=self.category, name="Test Topic")
+
+    def test_create_board(self):
+        board = Board.objects.create(topic=self.topic, name="Test Board")
+
+        self.assertEqual(board.name, "Test Board")
+        self.assertEqual(board.topic.name, "Test Topic")
+
+class ColumnModelTest(TestCase):
+    def setUp(self):
+        self.user = KanbanUser.objects.create(username="testuser", password="testpass123")
+        self.category = Category.objects.create(user=self.user, name="Test Category")
+        self.topic = Topic.objects.create(category=self.category, name="Test Topic")
+        self.board = Board.objects.create(topic=self.topic, name="Test Board")
+
+    def test_create_column(self):
+        column = Column.objects.create(board=self.board, title="Test Column", order=1)
+
+        self.assertEqual(column.title, "Test Column")
+        self.assertEqual(column.board.name, "Test Board")
+        self.assertEqual(column.order, 1)
+        self.assertEqual(str(column), "Test Column - Test Board")
