@@ -3,6 +3,7 @@ import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from django.contrib.auth.hashers import make_password, check_password
 from .models import Board, Column, Card, KanbanUser, Category, Topic ,SubTask
 
 def home_view(request):
@@ -20,9 +21,12 @@ def login_view(request):
         username = request.POST["username"]
         password = request.POST["password"]
         try:
-            user = KanbanUser.objects.get(username=username, password=password)
-            request.session['user_id'] = user.id
-            return redirect(f'/{username}/categories/')
+            user = KanbanUser.objects.get(username=username)
+            if check_password(password, user.password):
+                request.session['user_id'] = user.id
+                return redirect(f'/{username}/categories/')
+            else:
+                return render(request, "board/login.html", {"error": "Invalid credentials"})
         except KanbanUser.DoesNotExist:
             return render(request, "board/login.html", {"error": "Invalid credentials"})
     return render(request, "board/login.html")
@@ -37,7 +41,7 @@ def register_view(request):
             return render(request, "board/register.html", {"error": "รหัสผ่านไม่ตรงกัน"})
         
         try:
-            KanbanUser.objects.create(username=username, password=password)
+            KanbanUser.objects.create(username=username, password=make_password(password))
             return render(request, "board/register.html", {"success": "สมัครสมาชิกสำเร็จ"})
         except:
             return render(request, "board/register.html", {"error": "ชื่อผู้ใช้นี้มีอยู่แล้ว"})
