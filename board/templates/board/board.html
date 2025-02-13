@@ -11,8 +11,12 @@
   <div class="header">
       <h1 class="board-title">{{ topic.name }}</h1>
       <div class="user-actions">
-          <span class="user-info">{{ username }}</span>
-          <a href="{% url 'board:logout' %}" class="logout-btn">Logout</a>
+        <div class="dropdown">
+            <span class="user-info dropdown-toggle" onclick="toggleDropdown()">{{ username }}</span>
+            <div id="dropdown-menu" class="dropdown-menu">
+                <a href="{% url 'board:logout' %}" class="dropdown-item">Logout</a>
+            </div>
+        </div>
       </div>
   </div>
   <div class="kanban-board">
@@ -30,7 +34,7 @@
                        onclick="openCardModal(this)">
                       <strong>{{ card.title }}</strong>
                       <div class="due-date" data-due="{{ card.due_date|default_if_none:'' }}">
-                        {% if card.due_date %}Due: {{ card.due_date }}{% endif %}
+                        {% if card.due_date %}Due: {{ card.due_date|date:"Y-m-d" }}{% endif %}
                       </div>
                   </div>
                   {% endif %}

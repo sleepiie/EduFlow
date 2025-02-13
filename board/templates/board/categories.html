@@ -5,21 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EduFlow</title>
     <link rel="stylesheet" href="/static/style.css">
+    <script defer src="/static/script.js"></script>
 </head>
 <body>
     <div class="header">
         <h1>Categories</h1>
         <div class="user-actions">
-            <span class="user-info">{{ username }}</span>
-            <a href="{% url 'board:logout' %}" class="logout-btn">Logout</a>
+            <div class="dropdown">
+                <span class="user-info dropdown-toggle" onclick="toggleDropdown()">{{ username }}</span>
+                <div id="dropdown-menu" class="dropdown-menu">
+                    <a href="{% url 'board:logout' %}" class="dropdown-item">Logout</a>
+                </div>
+            </div>
         </div>
     </div>
     
     <div class="categories-container">
         {% for category in categories %}
-        <div class="category-card">
-            <a href="/{{ username }}/category/{{ category.id }}/">{{ category.name }}</a>
-        </div>
+        <a a href="/{{ username }}/category/{{ category.id }}/" class="category-card">
+            <div>{{ category.name }}</div>
+        </a>
         {% endfor %}
     </div>
 

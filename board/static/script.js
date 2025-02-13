@@ -3,6 +3,8 @@ const username = window.location.pathname.split('/')[1];
 document.addEventListener('DOMContentLoaded', () => {
     const cards = document.querySelectorAll('.card');
     const dropzones = document.querySelectorAll('.dropzone');
+    
+    document.getElementById("dropdown-menu").style.display = "none";
 
     // Drag events for cards
     cards.forEach(card => {
@@ -29,7 +31,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if(diffDays < 5){
                 el.style.color = "red";
             }
+            else if(5 <= diffDays && diffDays <= 12){
+                el.style.color = "#ccb839";
+            }
+            else {
+                el.style.color = "green";
+            }
         }
+    });
+    dropzones.forEach(dropzone => {
+        sortCardsByRemainingTime(dropzone);
     });
 });
 
@@ -58,7 +69,6 @@ async function drop(e) {
     const dropzone = e.target.closest('.dropzone');
     const columnId = dropzone.dataset.status;
     
-    // Get the new position
     const cards = [...dropzone.querySelectorAll('.card:not(.dragging)')];
     let newOrder = cards.length;
     
@@ -85,6 +95,19 @@ async function drop(e) {
     } catch (error) {
         console.error('Error:', error);
     }
+}
+
+function sortCardsByRemainingTime(dropzone) {
+    const cards = Array.from(dropzone.querySelectorAll('.card'));
+    const now = new Date();
+    cards.sort((a, b) => {
+        const dueA = a.dataset.due_date ? new Date(a.dataset.due_date) : null;
+        const dueB = b.dataset.due_date ? new Date(b.dataset.due_date) : null;
+        const diffA = dueA ? dueA - now : Infinity;
+        const diffB = dueB ? dueB - now : Infinity;
+        return diffA - diffB;
+    });
+    cards.forEach(card => dropzone.appendChild(card));
 }
 
 async function addCard(columnId) {
@@ -131,7 +154,7 @@ async function addCard(columnId) {
     }
 }
 
-// Modal functions
+
 function openCardModal(cardElement) {
     const modal = document.getElementById('card-modal');
     modal.style.display = "block";
@@ -150,6 +173,22 @@ function closeCardModal() {
     const modal = document.getElementById('card-modal');
     modal.style.display = "none";
 }
+
+function toggleDropdown() {
+    var dropdownMenu = document.getElementById("dropdown-menu");
+    if (dropdownMenu.style.display === "block") {
+        dropdownMenu.style.display = "none";
+    } else {
+        dropdownMenu.style.display = "block";
+    }
+}
+
+document.addEventListener('click', function(event) {
+    var dropdown = document.querySelector('.dropdown');
+    if (dropdown && !dropdown.contains(event.target)) {
+        document.getElementById("dropdown-menu").style.display = "none";
+    }
+});
 
 
 function loadSubtasks(cardId) {
@@ -246,13 +285,11 @@ function handleSubtaskButtonClick() {
     const input = document.getElementById('new-subtask-input');
     const button = document.getElementById('add-subtask-btn');
 
-    // ถ้า input field ยังไม่แสดงอยู่ ให้แสดง input field แล้วเปลี่ยนข้อความปุ่มเป็น "Save Subtask"
     if (input.style.display === 'none' || input.style.display === '') {
         input.style.display = 'block';
         input.focus();
         button.textContent = 'Save';
     } else {
-        // เมื่อ input field แสดงอยู่แล้ว ให้บันทึก subtask
         const cardId = document.getElementById('modal-card-id').value;
         const title = input.value.trim();
         if (!title) {
@@ -273,9 +310,7 @@ function handleSubtaskButtonClick() {
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
-                // Reload subtasks หลังบันทึกสำเร็จ
                 loadSubtasks(cardId);
-                // Reset input field และเปลี่ยนปุ่มกลับเป็น "Add Subtask"
                 input.value = '';
                 input.style.display = 'none';
                 button.textContent = 'Add Subtask';
@@ -341,13 +376,12 @@ async function saveCardChanges() {
         });
         const result = await response.json();
         if(result.status === "success"){
-            // อัปเดตข้อมูลใน element ของ card ที่แสดงใน board
             const cardElement = document.querySelector(`.card[data-id="${cardId}"]`);
             cardElement.dataset.title = title;
             cardElement.dataset.content = content;
             cardElement.dataset.due_date = dueDate;
             cardElement.innerHTML = `<strong>${title}</strong><div class="due-date" data-due="${dueDate}">${ dueDate ? "Due: " + dueDate : "" }</div>`;
-            // ตรวจสอบ due date ใหม่
+
             const dueEl = cardElement.querySelector('.due-date');
             if(dueDate){
                 const dueDt = new Date(dueDate);
@@ -356,8 +390,12 @@ async function saveCardChanges() {
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                 if(diffDays < 5){
                     dueEl.style.color = "red";
-                } else {
-                    dueEl.style.color = "";
+                } 
+                else if(6 <= diffDays && diffDays <= 12){
+                    dueEl.style.color = "#ccb839";
+                }
+                else {
+                    dueEl.style.color = "green";
                 }
             }
             closeCardModal();
@@ -384,7 +422,7 @@ async function deleteCard() {
         });
         const result = await response.json();
         if(result.status === "success"){
-            // ลบ element card ออกจากหน้า board
+
             const cardElement = document.querySelector(`.card[data-id="${cardId}"]`);
             cardElement.parentNode.removeChild(cardElement);
             closeCardModal();
