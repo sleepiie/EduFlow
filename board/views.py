@@ -79,11 +79,14 @@ def category_detail(request, username, category_id):
     try:
         category = Category.objects.get(id=category_id)
         topics = Topic.objects.filter(category=category)
+        user = KanbanUser.objects.get(id=request.session['user_id'])
+        all_categories = Category.objects.filter(user=user)
         
         return render(request, 'board/category_detail.html', {
             'category': category,
             'topics': topics,
-            'username': username
+            'username': username,
+            'categories': all_categories
         })
     except Category.DoesNotExist:
         return redirect('board:categories', username=username)
