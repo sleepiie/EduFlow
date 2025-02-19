@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f0f0f0; text-align: center; }
+        .card { background: white; padding: 15px; margin: 10px auto; width: 80%; border-radius: 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
+        h2 { color: #333; }
+        .due-date { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>📢 Notifications</h1>
+
+    {% if cards %}
+        {% for card in cards %}
+            <div class="card">
+                <h2>{{ card.title }}</h2>
+                <p>{{ card.column.board.name}}</p>
+                <p>{{ card.content }}</p>
+                <p class="due-date">Due Date: {{ card.due_date }}</p>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No upcoming deadlines within 5 days.</p>
+    {% endif %}
+</body>
+</html>

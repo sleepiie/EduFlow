@@ -462,3 +462,8 @@ button:hover {
   .delete-subtask-icon:hover {
     color: #c9302c;
   }
+
+  #notification{
+    font-size: 20px;
+    color: #c9302c !important;
+  }

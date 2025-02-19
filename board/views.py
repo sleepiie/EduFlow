@@ -1,10 +1,38 @@
 from django.shortcuts import render, redirect
 import json
-from django.http import JsonResponse
+from django.http import JsonResponse , HttpResponseForbidden
+
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.hashers import make_password, check_password
 from .models import Board, Column, Card, KanbanUser, Category, Topic ,SubTask
+from django.utils.timezone import now
+
+
+
+def notifications(request, username):
+    try:
+        today = now().date()
+
+        user = KanbanUser.objects.get(username=username)
+
+        cards = Card.objects.filter(
+            column__board__topic__category__user=user,
+            due_date__isnull=False
+        )
+
+        filtered_cards = [card for card in cards if (card.due_date - today).days < 5]
+        print(filtered_cards)
+
+        return render(request, "board/notifications.html", {"cards": filtered_cards})
+
+    except KanbanUser.DoesNotExist:
+        return HttpResponseForbidden("User not found")
+
+    except Exception as e:
+        print(f"Error: {e}") 
+        return HttpResponseForbidden("Something went wrong")
+
 
 def home_view(request):
     if request.session.get('user_id'):
@@ -140,13 +168,20 @@ def create_category(request, username):
 def list_categories(request, username):
     if not request.session.get('user_id'):
         return redirect('/')
-    
+
     user = KanbanUser.objects.get(id=request.session['user_id'])
     categories = Category.objects.filter(user=user)
-    
+
+   
+    filtered_card_ids = request.session.get('filtered_cards', [])
+    filtered_cards = len(Card.objects.filter(id__in=filtered_card_ids)) if filtered_card_ids else 0  
+
+    print(f"Filtered Cards Count: {filtered_cards}") 
+
     return render(request, 'board/categories.html', {
         'categories': categories,
-        'username': username
+        'username': username,
+        'filtered_cards': filtered_cards
     })
 
 

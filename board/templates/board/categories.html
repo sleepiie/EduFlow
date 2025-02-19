@@ -9,6 +9,7 @@
 <body>
     <div class="header">
         <h1>Categories</h1>
+        <a  id = "notification" href="/{{ username }}/categories/notifications/">notification({{filtered_cards}})</a>
         <div class="user-actions">
             <span class="user-info">{{ username }}</span>
             <a href="{% url 'board:logout' %}" class="logout-btn">Logout</a>

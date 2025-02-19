@@ -21,5 +21,6 @@ urlpatterns = [
     path('<str:username>/toggle-subtask/', views.toggle_subtask, name='toggle_subtask'),
     path('<str:username>/delete-subtask/', views.delete_subtask, name='delete_subtask'),
     path('<str:username>/delete-card/', views.delete_card, name='delete_card'),
+    path('<str:username>/categories/notifications/', views.notifications, name='category'),
     path('logout/', views.logout_view, name='logout'),
 ]
