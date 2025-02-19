@@ -6,6 +6,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.alert import Alert
 from selenium.webdriver.common.keys import Keys
 from board.models import KanbanUser, Category, Topic, Board, Column
+from django.contrib.auth.hashers import make_password
 import time
 
 
@@ -63,8 +64,8 @@ class usertest(LiveServerTestCase):
         time.sleep(1)      
     
     def test_can_login(self):
-        
-        KanbanUser.objects.create(username='tanny', password='GJK67891P4R')
+        hash_password = make_password('GJK67891P4R')
+        KanbanUser.objects.create(username='tanny', password=hash_password)
 
         #แทนกลับไปยังหน้าล็อกอินแล้วใส่ username และ password
         self.browser.get(f"{self.live_server_url}/login/")
@@ -79,14 +80,15 @@ class usertest(LiveServerTestCase):
 
         #หน้าเว็บเปลี่ยนไปยังหน้าหลัก โดยมีด้านขวาบนแสดงชื่อ username และมีปุ่มสำหรับสร้างหมวดหมู่
         user_info = WebDriverWait(self.browser, 10).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "user-info"))
+            EC.presence_of_element_located((By.ID, "user-info"))
         )
         self.assertEqual('tanny', user_info.text)
         self.assertIn('Create Category', self.browser.find_element(By.CLASS_NAME, 'action-buttons').text)
         time.sleep(1)
 
     def test_core_feature(self):
-        user = KanbanUser.objects.create(username='tanny', password='GJK67891P4R')
+        hash_password = make_password('GJK67891P4R')
+        KanbanUser.objects.create(username='tanny', password=hash_password)
         self.browser.get(f"{self.live_server_url}/login/")
         username_input = self.browser.find_element(By.NAME, 'username')
         password_input = self.browser.find_element(By.NAME, 'password')
