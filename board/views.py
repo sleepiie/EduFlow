@@ -107,11 +107,14 @@ def category_detail(request, username, category_id):
     try:
         category = Category.objects.get(id=category_id)
         topics = Topic.objects.filter(category=category)
+        user = KanbanUser.objects.get(id=request.session['user_id'])
+        all_categories = Category.objects.filter(user=user)
         
         return render(request, 'board/category_detail.html', {
             'category': category,
             'topics': topics,
-            'username': username
+            'username': username,
+            'categories': all_categories
         })
     except Category.DoesNotExist:
         return redirect('board:categories', username=username)
@@ -226,10 +229,8 @@ def add_card(request ,username):
         column_id = data.get('columnId')
         content = data.get('content', 'New Task')
         
-        # Debug print
         print(f"Received request to add card: Column ID: {column_id}, Content: {content}")
         
-        # Get the column
         try:
             column = Column.objects.get(id=column_id)
         except Column.DoesNotExist:
@@ -238,10 +239,8 @@ def add_card(request ,username):
                 'message': f'Column with id {column_id} not found'
             }, status=404)
         
-        # Get the last order number
         last_order = Card.objects.filter(column=column).count()
         
-        # Create new card
         card = Card.objects.create(
             column=column,
             title=content,   

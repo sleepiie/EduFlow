@@ -63,6 +63,7 @@ class usertest(LiveServerTestCase):
         time.sleep(1)      
     
     def test_can_login(self):
+        
         KanbanUser.objects.create(username='tanny', password='GJK67891P4R')
 
         #แทนกลับไปยังหน้าล็อกอินแล้วใส่ username และ password

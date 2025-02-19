@@ -70,6 +70,8 @@ body {
     padding: 5px;
     border: 2px dashed #ccc;
     border-radius: 5px;
+    max-height: 235px;
+    overflow-y: auto;
 }
 
 .dropzone.over {
@@ -226,12 +228,16 @@ body {
 }
 
 .category-card {
+    display: block;
     background: white;
+    font-weight: 600;
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     padding: 15px;
     text-align: center;
-    transition: 0.3s;
+    transition: background 0.3s, color 0.3s;
+    text-decoration: none;
+    color: inherit;
 }
 
 .category-card:hover {
@@ -253,12 +259,16 @@ body {
 }
 
 .topic-card {
+    display: block;
+    font-weight: 600;
     background: white;
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     padding: 15px;
     width: 200px;
     text-align: center;
+    text-decoration: none;
+    color: inherit;
     transition: 0.3s;
 }
 
@@ -410,20 +420,17 @@ button:hover {
     transition: color 0.3s ease, text-decoration 0.3s ease;
   }
   
-  /* เมื่อ subtask ทำเครื่องหมายเสร็จแล้ว ให้เพิ่มคลาส .completed */
   .subtask-title.completed {
     text-decoration: line-through;
     color: #999;
   }
   
-  /* Container สำหรับส่วนเพิ่ม subtask */
   #subtask-add-container {
     display: flex;
     align-items: center;
     margin-top: 10px;
   }
   
-  /* สไตล์ input สำหรับกรอกชื่อ subtask */
   #new-subtask-input {
     flex-grow: 1;
     padding: 8px;
@@ -433,7 +440,7 @@ button:hover {
     margin-right: 8px;
   }
   
-  /* สไตล์ปุ่มสำหรับเพิ่มหรือบันทึก subtask */
+
   #add-subtask-btn {
    margin-bottom: 10px;
     padding: 8px 12px;
@@ -466,4 +473,40 @@ button:hover {
   #notification{
     font-size: 20px;
     color: #c9302c !important;
+  }
+  .dropdown {
+    position: relative;
+    display: inline-block;
+}
+  
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%; 
+    right: 0;
+    background-color: #ebebeb; 
+    color: black;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    z-index: 1000;
+    min-width: 100px;
+    box-shadow: 0 5px 8px rgba(0, 0, 0, 0.1);
+    margin-top: 9px;
+}
+  
+  .dropdown-menu a {
+    display: block;
+    padding: 8px 12px;
+    text-decoration: none;
+    color: black; 
+    background-color: #ebebeb; 
+    border-radius: 5px;
+}
+
+.dropdown-menu a:hover {
+    background-color: #c9c9c9;
+}
+  
+  .dropdown-toggle {
+    cursor: pointer;
   }
