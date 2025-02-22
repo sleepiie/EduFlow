@@ -34,7 +34,7 @@
                        onclick="openCardModal(this)">
                       <strong>{{ card.title }}</strong>
                       <div class="due-date" data-due="{{ card.due_date|default_if_none:'' }}">
-                        {% if card.due_date %}Due: {{ card.due_date|date:"Y-m-d" }}{% endif %}
+                        {% if card.due_date %}Due: {{ card.due_date|date:"d-m-Y" }}{% endif %}
                       </div>
                   </div>
                   {% endif %}

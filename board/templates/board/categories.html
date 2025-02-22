@@ -16,7 +16,7 @@
                 <div class="flex items-center justify-start">
                     <button data-drawer-target="logo-sidebar" data-drawer-toggle="logo-sidebar" aria-controls="logo-sidebar" type="button" class="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200">
                         <span class="sr-only">Open sidebar</span>
-                        <svg class="w-6 h-6" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <svg class="w-8 h-6" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                             <path clip-rule="evenodd" fill-rule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"></path>
                         </svg>
                     </button>
@@ -25,6 +25,30 @@
                     </a>
                 </div>
                 <div class="flex items-center">
+                    <!--Notification dropdown--> 
+                    <div class="relative me-3">
+                        <button type="button" id="notification-button" class="flex items-center p-2 text-gray-500 hover:bg-gray-100 rounded-lg focus:outline-none" aria-expanded="false" data-dropdown-toggle="dropdown-notifications">
+                            <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5.365V3m0 2.365a5.338 5.338 0 0 1 5.133 5.368v1.8c0 2.386 1.867 2.982 1.867 4.175 0 .593 0 1.292-.538 1.292H5.538C5 18 5 17.301 5 16.708c0-1.193 1.867-1.789 1.867-4.175v-1.8A5.338 5.338 0 0 1 12 5.365ZM8.733 18c.094.852.306 1.54.944 2.112a3.48 3.48 0 0 0 4.646 0c.638-.572 1.236-1.26 1.33-2.112h-6.92Z"/>
+                            </svg>
+                        </button>
+                        <div id="dropdown-notifications" class="z-10 hidden my-4 text-base list-none bg-white divide-y divide-gray-100 rounded shadow w-64">
+                            <ul class="py-1" role="none">
+                                {% for card in filtered_card %}
+                                <li>
+                                    <a href="{% url 'board:board' username=username topic_id=card.column.board.topic.id %}" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                                        {{ card.title }} : {{ card.due_date|date:"d-m-Y" }}
+                                    </a>
+                                </li>
+                                {% empty %}
+                                <li>
+                                    <span class="block px-4 py-2 text-sm text-gray-700">ไม่มี card ที่ใกล้หมดเวลา</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>                        
+                    </div>
+                    <!--User dropdown-->
                     <div class="flex items-center ms-3">
                         <div>
                             <button type="button"  id="user-info"

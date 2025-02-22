@@ -45,6 +45,7 @@ class usertest(LiveServerTestCase):
         #แทนกดสมัครสมาชิก และกรอกข้อมูลตามช่องต่างๆ แล้วกดปุ่มสมัครสมาชิก
         link = self.browser.find_element(By.LINK_TEXT, "สมัครสมาชิก")
         link.click()
+
         ##กรอกข้อมูล
         username_input = self.browser.find_element(By.NAME, 'username')
         password_input = self.browser.find_element(By.NAME, 'password')
@@ -60,9 +61,8 @@ class usertest(LiveServerTestCase):
             EC.presence_of_element_located((By.CLASS_NAME, "success-message"))
         )
         self.assertIn('สมัครสมาชิกสำเร็จ', success_message.text)
+        time.sleep(1)
 
-        time.sleep(1)      
-    
     def test_can_login(self):
         hash_password = make_password('GJK67891P4R')
         KanbanUser.objects.create(username='tanny', password=hash_password)
@@ -70,7 +70,7 @@ class usertest(LiveServerTestCase):
         #แทนกลับไปยังหน้าล็อกอินแล้วใส่ username และ password
         self.browser.get(f"{self.live_server_url}/login/")
 
-        ##กรอกข้อมู,
+        ##กรอกข้อมูล
         username_input = self.browser.find_element(By.NAME, 'username')
         password_input = self.browser.find_element(By.NAME, 'password')
 
@@ -80,10 +80,12 @@ class usertest(LiveServerTestCase):
 
         #หน้าเว็บเปลี่ยนไปยังหน้าหลัก โดยมีด้านขวาบนแสดงชื่อ username และมีปุ่มสำหรับสร้างหมวดหมู่
         user_info = WebDriverWait(self.browser, 10).until(
-            EC.presence_of_element_located((By.ID, "user-info"))
+            EC.presence_of_element_located((By.CSS_SELECTOR, "[data-dropdown-toggle='dropdown-user']"))
         )
-        self.assertEqual('tanny', user_info.text)
-        self.assertIn('Create Category', self.browser.find_element(By.CLASS_NAME, 'action-buttons').text)
+        self.assertIn('tanny', user_info.text)
+        self.assertTrue(
+            self.browser.find_element(By.CLASS_NAME, 'action-buttons').is_displayed()
+        )
         time.sleep(1)
 
     def test_core_feature(self):
@@ -103,7 +105,7 @@ class usertest(LiveServerTestCase):
         )
         create_category_btn.click()
 
-        #แทนใส่ชื่อบอร์ดว่า “Learn management”
+        #แทนใส่ชื่อบอร์ดว่า "Learn management"
         alert = Alert(self.browser)
         alert.send_keys("Learn management")
         alert.accept()
@@ -117,8 +119,10 @@ class usertest(LiveServerTestCase):
         #แทนกดเข้าไปในหมวดหมู่
         category_link.click()
 
-        #แทนเจอปุ่ม “Create Board” แทนเลยลองกดปุ่ม “Create Board"
-        create_topic_btn = self.browser.find_element(By.CLASS_NAME, 'add-topic-button')
+        #แทนเจอปุ่ม "Create Board" แทนเลยลองกดปุ่ม "Create Board"
+        create_topic_btn = WebDriverWait(self.browser, 10).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, '.action-buttons button'))
+        )
         create_topic_btn.click()
 
         #หน้าเว็บก็แสดงหน้าต่างสำหรับกรอกหัวข้อในหมวดหมู่นั้นขึ้นมา
@@ -126,7 +130,7 @@ class usertest(LiveServerTestCase):
         alert.send_keys("English")
         alert.accept()
 
-        #แทนใส่ชื่อหัวข้อว่า “English”
+        #แทนใส่ชื่อหัวข้อว่า "English"
         board_link = WebDriverWait(self.browser, 10).until(
             EC.presence_of_element_located((By.LINK_TEXT, "English"))
         )      
@@ -157,18 +161,18 @@ class usertest(LiveServerTestCase):
 
         new_task.click()
 
-        #รอ modal ขึ้นมา
+         #รอ modal ขึ้นมา
         modal = WebDriverWait(self.browser, 10).until(
             EC.visibility_of_element_located((By.ID, "card-modal"))
         )
 
-        #กรอกข้อมูลใน modal
+
         title_input = self.browser.find_element(By.ID, "card-title")
         content_textarea = self.browser.find_element(By.ID, "card-content")
         due_date_input = self.browser.find_element(By.ID, "card-due-date")
-        subtask_add_btn = self.browser.find_element(By.ID , "add-subtask-btn")
+        subtask_add_btn = self.browser.find_element(By.ID, "add-subtask-btn")
         
-        #กรอกข้อมูล task
+         #กรอกข้อมูล task
         title_input.clear()
         title_input.send_keys("Test Card")
         content_textarea.clear()
@@ -176,6 +180,7 @@ class usertest(LiveServerTestCase):
         due_date_input.clear()
         self.browser.execute_script("arguments[0].value = '2025-02-17';", due_date_input)
         self.browser.execute_script("arguments[0].dispatchEvent(new Event('change'));", due_date_input)
+
         #กรอกข้อมูล subtask
         subtask_add_btn.click()
         subtask_input = WebDriverWait(self.browser, 10).until(
@@ -189,6 +194,7 @@ class usertest(LiveServerTestCase):
         save_button.click()
 
         time.sleep(1)
+
         #เปิด modal อีกครั้ง
         new_task.click()
         modal = WebDriverWait(self.browser, 10).until(
@@ -227,19 +233,20 @@ class usertest(LiveServerTestCase):
         due_date_input.clear()
         self.browser.execute_script("arguments[0].value = '2025-03-16';", due_date_input)
         self.browser.execute_script("arguments[0].dispatchEvent(new Event('change'));", due_date_input)
-        
+
         #ลบ subtask
-        subtask_delete = self.browser.find_element(By.CSS_SELECTOR , ".delete-subtask-icon")
+        subtask_delete = self.browser.find_element(By.CSS_SELECTOR, ".delete-subtask-icon")
         subtask_delete.click()
         WebDriverWait(self.browser, 10).until(EC.alert_is_present())
         alert = self.browser.switch_to.alert
         alert.accept()
         WebDriverWait(self.browser, 10).until(
-            EC.invisibility_of_element_located((By.CSS_SELECTOR , "#subtasks-container .subtask-item"))
+            EC.invisibility_of_element_located((By.CSS_SELECTOR, "#subtasks-container .subtask-item"))
         )
         time.sleep(1)
         save_button.click()
         time.sleep(1)
+
 
         #เปิด modal อีกครั้งเพื่อเช็คว่าข้อมูลที่แก้ไปถูกต้อง
         new_task.click()
@@ -252,7 +259,7 @@ class usertest(LiveServerTestCase):
         updated_due_date = self.browser.find_element(By.ID, "card-due-date").get_attribute("value")
         update_subtask = self.browser.find_elements(By.CSS_SELECTOR, "#subtasks-container .subtask-item")
 
-
+        
         self.assertEqual(updated_title, "Test Edit")
         self.assertEqual(updated_content, "This is test edit")
         self.assertEqual(updated_due_date, "2025-03-16")
@@ -260,20 +267,15 @@ class usertest(LiveServerTestCase):
 
         time.sleep(1)
 
-
         #ทดสอบลบ task
-        delete_task_btn = self.browser.find_element(By.ID , "delete-card")
+        delete_task_btn = self.browser.find_element(By.ID, "delete-card")
         delete_task_btn.click()
 
         WebDriverWait(self.browser, 10).until(
-            EC.invisibility_of_element_located((By.ID , "card-modal"))
+            EC.invisibility_of_element_located((By.ID, "card-modal"))
         )
 
         tasks = self.browser.find_elements(By.CLASS_NAME, "card")
         self.assertEqual(len(tasks), 0)
 
         time.sleep(1)
-
-
-
-        

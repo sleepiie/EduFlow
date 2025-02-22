@@ -5,6 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.hashers import make_password, check_password
 from .models import Board, Column, Card, KanbanUser, Category, Topic ,SubTask
+from django.utils.timezone import now
 
 def home_view(request):
     if request.session.get('user_id'):
@@ -143,13 +144,21 @@ def create_category(request, username):
 def list_categories(request, username):
     if not request.session.get('user_id'):
         return redirect('/')
+    today = now().date()
     
     user = KanbanUser.objects.get(id=request.session['user_id'])
     categories = Category.objects.filter(user=user)
+    cards = Card.objects.filter(
+            column__board__topic__category__user=user,
+            due_date__isnull=False
+        )
+    filtered_cards = [card for card in cards if (card.due_date - today).days < 5]
+    
     
     return render(request, 'board/categories.html', {
         'categories': categories,
-        'username': username
+        'username': username,
+        'filtered_card': filtered_cards
     })
 
 
