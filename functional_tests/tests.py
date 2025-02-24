@@ -5,8 +5,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.alert import Alert
 from selenium.webdriver.common.keys import Keys
-from board.models import KanbanUser, Category, Topic, Board, Column
+from board.models import KanbanUser, Category, Topic, Board, Column ,Card
 from django.contrib.auth.hashers import make_password
+from datetime import date, timedelta
 import time
 
 
@@ -279,3 +280,135 @@ class usertest(LiveServerTestCase):
         self.assertEqual(len(tasks), 0)
 
         time.sleep(1)
+
+        #ทดสอบ notification
+        
+
+    
+    def test_user_dropdown(self):
+        hash_password = make_password('GJK67891P4R')
+        KanbanUser.objects.create(username='tanny', password=hash_password)
+        self.browser.get(f"{self.live_server_url}/login/")
+        username_input = self.browser.find_element(By.NAME, 'username')
+        password_input = self.browser.find_element(By.NAME, 'password')
+        username_input.send_keys('tanny')
+        password_input.send_keys('GJK67891P4R')
+        self.browser.find_element(By.TAG_NAME, 'button').click()
+        
+        # คลิกเปิด Dropdown
+        user_dropdown_btn = WebDriverWait(self.browser, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "[data-dropdown-toggle='dropdown-user']"))
+        )
+        user_dropdown_btn.click()
+        
+        dropdown_menu = WebDriverWait(self.browser, 10).until(
+            EC.presence_of_element_located((By.ID, "dropdown-user"))
+        )
+        
+        # ตรวจสอบว่ามีตัวเลือก Profile และ Logout
+        logout_option = dropdown_menu.find_element(By.LINK_TEXT, "Logout")
+
+        self.assertTrue(logout_option.is_displayed())
+
+        time.sleep(1)
+
+
+    def test_notifications(self):
+        hash_password = make_password('GJK67891P4R')
+        user = KanbanUser.objects.create(username='tanny', password=hash_password)
+        self.browser.get(f"{self.live_server_url}/login/")
+        username_input = self.browser.find_element(By.NAME, 'username')
+        password_input = self.browser.find_element(By.NAME, 'password')
+        username_input.send_keys('tanny')
+        password_input.send_keys('GJK67891P4R')
+        self.browser.find_element(By.TAG_NAME, 'button').click()
+
+        # สร้างบอร์ด
+        category = Category.objects.create(user=user, name='Test Category')
+        topic = Topic.objects.create(category=category, name='Test Topic')
+        board = Board.objects.create(topic=topic, name='Test Board')
+        column = Column.objects.create(board=board, title='todo', order=0)
+
+
+        today = date.today()
+        # สร้าง task ที่มี duedate = 3 วัน
+        urgent_task = Card.objects.create(
+            column=column,
+            title='Urgent Task',
+            content='Due in 3 days',
+            due_date=today + timedelta(days=3),
+            order=0
+        )
+        # สร้าง task ที่มี duedate = 7 วัน
+        normal_task = Card.objects.create(
+            column=column,
+            title='Normal Task',
+            content='Due in 7 days',
+            due_date=today + timedelta(days=7),
+            order=1
+        )
+
+        # ไปที่หน้าหมวดหมู่
+        self.browser.get(f"{self.live_server_url}/tanny/categories/")
+
+        # เช็คจำนวน notification ในวงกลมสีแดง
+        notification_count = WebDriverWait(self.browser, 10).until(
+            EC.presence_of_element_located((By.ID, "notification-count"))
+        )
+        self.assertEqual(notification_count.text, "1")
+
+        # เช็ค task ที่แสดง ใน notification
+        notification_button = self.browser.find_element(By.ID, "notification-button")
+        notification_button.click()
+
+        dropdown_notifications = WebDriverWait(self.browser, 10).until(
+            EC.visibility_of_element_located((By.ID, "dropdown-notifications"))
+        )
+
+        # เช็คว่า task ที่ duedate < 5 แสดงใน notification
+        notifications = dropdown_notifications.find_elements(By.TAG_NAME, "a")
+        notification_texts = [n.text for n in notifications]
+        self.assertIn('Urgent Task', notification_texts[0])
+        self.assertIn((today + timedelta(days=3)).strftime("%d-%m-%Y"), notification_texts[0])
+
+        # ช็คว่า task ที่ duedate > 5 ไม่แสดงใน notification
+        normal_task_date = (today + timedelta(days=7)).strftime("%d-%m-%Y")
+        normal_task_found = any(
+            'Normal Task' in text and normal_task_date in text 
+            for text in notification_texts
+        )
+        self.assertFalse(normal_task_found)
+
+        # ทดสอบกด link ใน notification ว่าไปที่ board ได้มั้ย
+        notification_link = dropdown_notifications.find_element(By.TAG_NAME, "a")
+        notification_link.click()
+
+        WebDriverWait(self.browser, 10).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "column"))
+        )
+        self.assertIn(f"/tanny/topic/{topic.id}/board", self.browser.current_url)
+
+        # ทดสอบกรณีไม่มีการแจ้งเตือน
+        # อัพเดทกำหนดส่งของงานด่วนให้เกิน 5 วัน
+        urgent_task.due_date = today + timedelta(days=6)
+        urgent_task.save()
+
+        # รีเฟรชหน้าหมวดหมู่
+        self.browser.get(f"{self.live_server_url}/tanny/categories/")
+
+        # ตรวจสอบว่าไม่มีตัวเลขแจ้งเตือน 
+        notification_counts = self.browser.find_elements(By.ID, "notification-count")
+        self.assertEqual(len(notification_counts), 0)
+
+        # ตรวจสอบข้อความเมื่อไม่มีการแจ้งเตือน
+        notification_button = self.browser.find_element(By.ID, "notification-button")
+        notification_button.click()
+
+        dropdown_notifications = WebDriverWait(self.browser, 10).until(
+            EC.visibility_of_element_located((By.ID, "dropdown-notifications"))
+        )
+        empty_message = dropdown_notifications.find_element(By.TAG_NAME, "span").text
+        self.assertEqual(empty_message, "no notification")
+
+        time.sleep(1)
+
