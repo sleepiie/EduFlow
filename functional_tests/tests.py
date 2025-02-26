@@ -281,7 +281,8 @@ class usertest(LiveServerTestCase):
 
         time.sleep(1)
 
-        #ทดสอบ notification
+
+        ##ทดสอบ notification
         add_task_btn = first_column.find_element(By.CLASS_NAME, "add-card-btn")
         add_task_btn.click()
 
@@ -318,17 +319,15 @@ class usertest(LiveServerTestCase):
         add_task_btn = first_column.find_element(By.CLASS_NAME, "add-card-btn")
         add_task_btn.click()
 
-        cards = WebDriverWait(first_column, 10).until(
-            EC.presence_of_all_elements_located((By.CLASS_NAME, "card"))
-        )
-        second_card = cards[1]
-        self.browser.execute_script("arguments[0].scrollIntoView(true);", second_card)
-        time.sleep(0.5)
-        WebDriverWait(self.browser, 10).until(
-            EC.element_to_be_clickable((By.CLASS_NAME, "card"))
+        WebDriverWait(first_column, 10).until(
+            lambda x: len(x.find_elements(By.CLASS_NAME, "card")) >= 2
         )
 
-        second_card.click()
+        all_cards = first_column.find_elements(By.CLASS_NAME, "card")
+        self.assertEqual(len(all_cards), 2)
+
+        second_task = all_cards[-1]
+        second_task.click()
 
         WebDriverWait(self.browser, 10).until(
             EC.visibility_of_element_located((By.ID, "card-modal"))
@@ -354,6 +353,7 @@ class usertest(LiveServerTestCase):
             EC.invisibility_of_element_located((By.ID, "card-modal"))
         )
         tasks = first_column.find_elements(By.CLASS_NAME, "card")
+
         #เช็คว่ามี 2 task
         self.assertEqual(len(tasks), 2)
 
