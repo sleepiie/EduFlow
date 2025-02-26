@@ -315,14 +315,20 @@ class usertest(LiveServerTestCase):
         WebDriverWait(self.browser, 10).until(
             EC.invisibility_of_element_located((By.ID, "card-modal"))
         )
-
+        add_task_btn = first_column.find_element(By.CLASS_NAME, "add-card-btn")
         add_task_btn.click()
+
         cards = WebDriverWait(first_column, 10).until(
             EC.presence_of_all_elements_located((By.CLASS_NAME, "card"))
         )
+        second_card = cards[1]
+        self.browser.execute_script("arguments[0].scrollIntoView(true);", second_card)
+        time.sleep(0.5)
+        WebDriverWait(self.browser, 10).until(
+            EC.element_to_be_clickable((By.CLASS_NAME, "card"))
+        )
 
-        new_task_future = cards[-1]
-        new_task_future.click()
+        second_card.click()
 
         WebDriverWait(self.browser, 10).until(
             EC.visibility_of_element_located((By.ID, "card-modal"))
