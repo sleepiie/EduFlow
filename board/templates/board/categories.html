@@ -42,7 +42,7 @@
                             <ul class="py-1" role="none">
                                 {% for card in filtered_card %}
                                 <li>
-                                    <a href="{% url 'board:board' username=username topic_id=card.column.board.topic.id %}" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                                    <a href="{% url 'board:mark_notification_seen' username=username card_id=card.id %}" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
                                         {{ card.title }} : {{ card.due_date|date:"d-m-Y" }}
                                     </a>
                                 </li>

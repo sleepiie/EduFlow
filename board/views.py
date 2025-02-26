@@ -150,7 +150,9 @@ def list_categories(request, username):
     categories = Category.objects.filter(user=user)
     cards = Card.objects.filter(
             column__board__topic__category__user=user,
-            due_date__isnull=False
+            due_date__isnull=False,
+            notification_seen=False
+
         )
     filtered_cards = [card for card in cards if (card.due_date - today).days < 5]
     
@@ -160,6 +162,25 @@ def list_categories(request, username):
         'username': username,
         'filtered_card': filtered_cards
     })
+
+def mark_notification_seen(request, username, card_id):
+    if not request.session.get('user_id'):
+        return redirect('/')
+    
+    try:
+        user = KanbanUser.objects.get(id=request.session['user_id'])
+        if user.username != username:
+            return redirect('/')
+            
+        card = Card.objects.get(id=card_id)
+        card.notification_seen = True
+        card.save()
+        
+        topic = card.column.board.topic
+        
+        return redirect('board:board', username=username, topic_id=topic.id)
+    except Card.DoesNotExist:
+        return redirect('board:categories', username=username)
 
 
 @csrf_exempt
@@ -174,6 +195,7 @@ def edit_card(request, username):
         card = Card.objects.get(id=card_id)
         card.title = title
         card.content = content
+        card.notification_seen = False
         card.due_date = due_date if due_date != "" else None
         card.save()
         return JsonResponse({'status': 'success'})

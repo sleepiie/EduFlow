@@ -13,6 +13,7 @@ urlpatterns = [
     path('<str:username>/category/<int:category_id>/', views.category_detail, name='category_detail'),
     path('<str:username>/category/<int:category_id>/create-topic/', views.create_topic, name='create_topic'),
     path('<str:username>/topic/<int:topic_id>/board/', views.kanban_board, name='board'),
+    path('<str:username>/mark-notification-seen/<int:card_id>/', views.mark_notification_seen, name='mark_notification_seen'),
     path('<str:username>/add-card/', views.add_card, name='add_card'),
     path('<str:username>/update-card/', views.update_card, name='update_card'),
     path('<str:username>/edit-card/', views.edit_card, name='edit_card'),

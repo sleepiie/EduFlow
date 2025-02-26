@@ -37,6 +37,7 @@ class Card(models.Model):
     content = models.TextField(blank=True)  # รายละเอียด card (สามารถเว้นว่างได้)
     order = models.IntegerField()
     due_date = models.DateField(null=True, blank=True)  # ฟิลด์ due date
+    notification_seen = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.title} - {self.column.title}"

@@ -282,7 +282,129 @@ class usertest(LiveServerTestCase):
         time.sleep(1)
 
         #ทดสอบ notification
+        add_task_btn = first_column.find_element(By.CLASS_NAME, "add-card-btn")
+        add_task_btn.click()
+
+        new_task = WebDriverWait(first_column, 10).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "card"))
+        )
+        new_task.click()
+
+        #รอ modal ขึ้นมา
+        WebDriverWait(self.browser, 10).until(
+            EC.visibility_of_element_located((By.ID, "card-modal"))
+        )
+
+        title_input = self.browser.find_element(By.ID, "card-title")
+        content_textarea = self.browser.find_element(By.ID, "card-content")
+        due_date_input = self.browser.find_element(By.ID, "card-due-date")
+        subtask_add_btn = self.browser.find_element(By.ID, "add-subtask-btn")
+
+        #กรอกข้อมูล task
+        title_input.clear()
+        title_input.send_keys("Test Notification")
+        content_textarea.clear()
+        content_textarea.send_keys("Test Test")
+        due_date_input.clear()
+        urgent_date = (date.today() + timedelta(days=3)).strftime('%Y-%m-%d')
+        self.browser.execute_script(f"arguments[0].value = '{urgent_date}';", due_date_input)
+        self.browser.execute_script("arguments[0].dispatchEvent(new Event('change'));", due_date_input)
+        save_button = self.browser.find_element(By.ID, "save-card")
+        save_button.click()
+        #รอ modals ปิด
+        WebDriverWait(self.browser, 10).until(
+            EC.invisibility_of_element_located((By.ID, "card-modal"))
+        )
+
+        add_task_btn.click()
+        cards = WebDriverWait(first_column, 10).until(
+            EC.presence_of_all_elements_located((By.CLASS_NAME, "card"))
+        )
+
+        new_task_future = cards[-1]
+        new_task_future.click()
+
+        WebDriverWait(self.browser, 10).until(
+            EC.visibility_of_element_located((By.ID, "card-modal"))
+        )
+        title_input = self.browser.find_element(By.ID, "card-title")
+        content_textarea = self.browser.find_element(By.ID, "card-content")
+        due_date_input = self.browser.find_element(By.ID, "card-due-date")
+        subtask_add_btn = self.browser.find_element(By.ID, "add-subtask-btn")
+
+        #กรอกข้อมูล task
+        title_input.clear()
+        title_input.send_keys("Test Notification2")
+        content_textarea.clear()
+        content_textarea.send_keys("Test2 Test2")
+        due_date_input.clear()
+        future_date = (date.today() + timedelta(days=6)).strftime('%Y-%m-%d')
+        self.browser.execute_script(f"arguments[0].value = '{future_date}';", due_date_input)
+        self.browser.execute_script("arguments[0].dispatchEvent(new Event('change'));", due_date_input)
+        save_button = self.browser.find_element(By.ID, "save-card")
+        save_button.click()
+        #รอ modals ปิด
+        WebDriverWait(self.browser, 10).until(
+            EC.invisibility_of_element_located((By.ID, "card-modal"))
+        )
+        tasks = first_column.find_elements(By.CLASS_NAME, "card")
+        #เช็คว่ามี 2 task
+        self.assertEqual(len(tasks), 2)
+
+        #กลับหน้า categories แล้วเช็ค notification
+        self.browser.get(f"{self.live_server_url}/tanny/categories/")
+        category_link = self.browser.find_element(By.LINK_TEXT, "Learn management").text
+        self.assertIn('Learn management',category_link)
+
+        notification_count = WebDriverWait(self.browser, 10).until(
+            EC.presence_of_element_located((By.ID, "notification-count"))
+        )
+        self.assertEqual(notification_count.text, "1")
+
+        #กดเปิด notification dropdown
+        notification_button = self.browser.find_element(By.ID, "notification-button")
+        notification_button.click()
+        dropdown_notifications = WebDriverWait(self.browser, 10).until(
+            EC.visibility_of_element_located((By.ID, "dropdown-notifications"))
+        )
+        notifications = dropdown_notifications.find_elements(By.TAG_NAME, "a")
+        notification_texts = [n.text for n in notifications]
+        urgent_date = (date.today() + timedelta(days=3)).strftime('%d-%m-%Y')
+        self.assertIn('Test Notification', notification_texts[0])
+        self.assertIn(f'{urgent_date}', notification_texts[0])
+
+        time.sleep(1)
         
+        #กดที่ notification เพื่อดูว่าไปยังหน้า board ได้หรือไม่
+        notification_links = dropdown_notifications.find_elements(By.TAG_NAME, "a")
+        notification_links[0].click()
+
+
+        WebDriverWait(self.browser, 10).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "column"))
+        )
+
+        board_title = self.browser.find_element(By.CLASS_NAME , "board-title").text
+        self.assertIn("English",board_title)
+
+        #กลับไปที่หน้า categories
+        self.browser.get(f"{self.live_server_url}/tanny/categories/")
+        #เช็คว่า Notification หายไป
+        notification_counts = self.browser.find_elements(By.ID, "notification-count")
+        self.assertEqual(len(notification_counts), 0)
+
+        # ตรวจสอบข้อความเมื่อไม่มีการแจ้งเตือน
+        notification_button = self.browser.find_element(By.ID, "notification-button")
+        notification_button.click()
+
+        dropdown_notifications = WebDriverWait(self.browser, 10).until(
+            EC.visibility_of_element_located((By.ID, "dropdown-notifications"))
+        )
+        empty_message = dropdown_notifications.find_element(By.TAG_NAME, "span").text
+        self.assertEqual(empty_message, "no notification")
+
+        time.sleep(1)
+
 
     
     def test_user_dropdown(self):
@@ -313,102 +435,5 @@ class usertest(LiveServerTestCase):
         time.sleep(1)
 
 
-    def test_notifications(self):
-        hash_password = make_password('GJK67891P4R')
-        user = KanbanUser.objects.create(username='tanny', password=hash_password)
-        self.browser.get(f"{self.live_server_url}/login/")
-        username_input = self.browser.find_element(By.NAME, 'username')
-        password_input = self.browser.find_element(By.NAME, 'password')
-        username_input.send_keys('tanny')
-        password_input.send_keys('GJK67891P4R')
-        self.browser.find_element(By.TAG_NAME, 'button').click()
 
-        # สร้างบอร์ด
-        category = Category.objects.create(user=user, name='Test Category')
-        topic = Topic.objects.create(category=category, name='Test Topic')
-        board = Board.objects.create(topic=topic, name='Test Board')
-        column = Column.objects.create(board=board, title='todo', order=0)
-
-
-        today = date.today()
-        # สร้าง task ที่มี duedate = 3 วัน
-        urgent_task = Card.objects.create(
-            column=column,
-            title='Urgent Task',
-            content='Due in 3 days',
-            due_date=today + timedelta(days=3),
-            order=0
-        )
-        # สร้าง task ที่มี duedate = 7 วัน
-        normal_task = Card.objects.create(
-            column=column,
-            title='Normal Task',
-            content='Due in 7 days',
-            due_date=today + timedelta(days=7),
-            order=1
-        )
-
-        # ไปที่หน้าหมวดหมู่
-        self.browser.get(f"{self.live_server_url}/tanny/categories/")
-
-        # เช็คจำนวน notification ในวงกลมสีแดง
-        notification_count = WebDriverWait(self.browser, 10).until(
-            EC.presence_of_element_located((By.ID, "notification-count"))
-        )
-        self.assertEqual(notification_count.text, "1")
-
-        # เช็ค task ที่แสดง ใน notification
-        notification_button = self.browser.find_element(By.ID, "notification-button")
-        notification_button.click()
-
-        dropdown_notifications = WebDriverWait(self.browser, 10).until(
-            EC.visibility_of_element_located((By.ID, "dropdown-notifications"))
-        )
-
-        # เช็คว่า task ที่ duedate < 5 แสดงใน notification
-        notifications = dropdown_notifications.find_elements(By.TAG_NAME, "a")
-        notification_texts = [n.text for n in notifications]
-        self.assertIn('Urgent Task', notification_texts[0])
-        self.assertIn((today + timedelta(days=3)).strftime("%d-%m-%Y"), notification_texts[0])
-
-        # ช็คว่า task ที่ duedate > 5 ไม่แสดงใน notification
-        normal_task_date = (today + timedelta(days=7)).strftime("%d-%m-%Y")
-        normal_task_found = any(
-            'Normal Task' in text and normal_task_date in text 
-            for text in notification_texts
-        )
-        self.assertFalse(normal_task_found)
-
-        # ทดสอบกด link ใน notification ว่าไปที่ board ได้มั้ย
-        notification_link = dropdown_notifications.find_element(By.TAG_NAME, "a")
-        notification_link.click()
-
-        WebDriverWait(self.browser, 10).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "column"))
-        )
-        self.assertIn(f"/tanny/topic/{topic.id}/board", self.browser.current_url)
-
-        # ทดสอบกรณีไม่มีการแจ้งเตือน
-        # อัพเดทกำหนดส่งของงานด่วนให้เกิน 5 วัน
-        urgent_task.due_date = today + timedelta(days=6)
-        urgent_task.save()
-
-        # รีเฟรชหน้าหมวดหมู่
-        self.browser.get(f"{self.live_server_url}/tanny/categories/")
-
-        # ตรวจสอบว่าไม่มีตัวเลขแจ้งเตือน 
-        notification_counts = self.browser.find_elements(By.ID, "notification-count")
-        self.assertEqual(len(notification_counts), 0)
-
-        # ตรวจสอบข้อความเมื่อไม่มีการแจ้งเตือน
-        notification_button = self.browser.find_element(By.ID, "notification-button")
-        notification_button.click()
-
-        dropdown_notifications = WebDriverWait(self.browser, 10).until(
-            EC.visibility_of_element_located((By.ID, "dropdown-notifications"))
-        )
-        empty_message = dropdown_notifications.find_element(By.TAG_NAME, "span").text
-        self.assertEqual(empty_message, "no notification")
-
-        time.sleep(1)
-
+    
