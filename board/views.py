@@ -167,20 +167,19 @@ def mark_notification_seen(request, username, card_id):
     if not request.session.get('user_id'):
         return redirect('/')
     
-    try:
-        user = KanbanUser.objects.get(id=request.session['user_id'])
-        if user.username != username:
-            return redirect('/')
-            
-        card = Card.objects.get(id=card_id)
-        card.notification_seen = True
-        card.save()
-        
-        topic = card.column.board.topic
-        
-        return redirect('board:board', username=username, topic_id=topic.id)
-    except Card.DoesNotExist:
+    user = KanbanUser.objects.get(id=request.session['user_id'])
+    if user.username != username:
+        return redirect('/')
+    
+    card = Card.objects.filter(id=card_id).first()
+    if not card:
         return redirect('board:categories', username=username)
+    
+    card.notification_seen = True
+    card.save()
+    
+    topic = card.column.board.topic
+    return redirect('board:board', username=username, topic_id=topic.id)
 
 
 @csrf_exempt
