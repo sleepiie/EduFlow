@@ -145,9 +145,22 @@ def list_categories(request, username):
     if not request.session.get('user_id'):
         return redirect('/')
     today = now().date()
+    current_date_str = today.strftime('%Y-%m-%d')
     
     user = KanbanUser.objects.get(id=request.session['user_id'])
+
+    last_visit_date = request.session.get('last_visit_date')
+    
+    if not last_visit_date or last_visit_date != current_date_str:
+        Card.objects.filter(
+            column__board__topic__category__user=user,
+            due_date__isnull=False,
+        ).update(notification_seen=False)
+    
+    request.session['last_visit_date'] = current_date_str;
+
     categories = Category.objects.filter(user=user)
+
     cards = Card.objects.filter(
             column__board__topic__category__user=user,
             due_date__isnull=False,

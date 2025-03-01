@@ -348,6 +348,7 @@ class usertest(LiveServerTestCase):
         self.browser.execute_script("arguments[0].dispatchEvent(new Event('change'));", due_date_input)
         save_button = self.browser.find_element(By.ID, "save-card")
         save_button.click()
+        
         #รอ modals ปิด
         WebDriverWait(self.browser, 10).until(
             EC.invisibility_of_element_located((By.ID, "card-modal"))
@@ -356,6 +357,7 @@ class usertest(LiveServerTestCase):
 
         #เช็คว่ามี 2 task
         self.assertEqual(len(tasks), 2)
+        time.sleep(1)
 
         #กลับหน้า categories แล้วเช็ค notification
         self.browser.get(f"{self.live_server_url}/tanny/categories/")
@@ -442,4 +444,4 @@ class usertest(LiveServerTestCase):
 
 
 
-    
+
