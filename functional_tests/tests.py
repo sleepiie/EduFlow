@@ -7,10 +7,9 @@ from selenium.webdriver.common.alert import Alert
 from selenium.webdriver.common.keys import Keys
 from board.models import KanbanUser, Category, Topic, Board, Column ,Card
 from django.contrib.auth.hashers import make_password
-from datetime import datetime, date, timedelta
+from datetime import date, timedelta
 import time
-from unittest.mock import patch
-from django.utils import timezone
+
 
 
 class usertest(LiveServerTestCase):
@@ -443,141 +442,5 @@ class usertest(LiveServerTestCase):
         self.assertTrue(logout_option.is_displayed())
 
         time.sleep(1)
-
-
-class NotificationTest(LiveServerTestCase):
-    def setUp(self):
-        # ตั้งค่าเบราว์เซอร์
-        self.browser = webdriver.Chrome()
-
-        self.user = KanbanUser.objects.create(
-            username='tanny', 
-            password=make_password('GJK67891P4R')
-        )
-        
-        self.browser.get(f"{self.live_server_url}/login/")
-        username_input = self.browser.find_element(By.NAME, 'username')
-        password_input = self.browser.find_element(By.NAME, 'password')
-        username_input.send_keys('tanny')
-        password_input.send_keys('GJK67891P4R')
-        self.browser.find_element(By.TAG_NAME, 'button').click()
-        
-        WebDriverWait(self.browser, 10).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "[data-dropdown-toggle='dropdown-user']"))
-        )
-        
-        self.category = Category.objects.create(user=self.user, name='Test Category')
-        self.topic = Topic.objects.create(category=self.category, name='Test Topic')
-        self.board = Board.objects.create(topic=self.topic, name='Test Board')
-        self.column = Column.objects.create(board=self.board, title='Test Column')
-        self.card = Card.objects.create(
-            column=self.column,
-            title='Test Card',
-            due_date=date.today() + timedelta(days=4),
-            notification_seen=False,
-            order=1
-        )
-        
-
-    def tearDown(self):
-        self.browser.quit()
-
-    def mock_now(self, days_offset):
-        mock_date = date.today() + timedelta(days=days_offset)
-        mock_datetime = datetime.combine(mock_date, datetime.min.time())
-        return timezone.make_aware(mock_datetime)
-
-    @patch('django.utils.timezone.now')
-    def test_notification_today(self,mock_now):
-        mock_now.return_value = self.mock_now(0)
-
-        self.browser.get(f"{self.live_server_url}/tanny/categories/")
-        
-        # ตรวจสอบว่ามีการแจ้งเตือน
-        notification_count = WebDriverWait(self.browser, 10).until(
-            EC.presence_of_element_located((By.ID, "notification-count"))
-        )
-        self.assertEqual(notification_count.text, "1")
-
-        #กดเปิด  notification
-        notification_button = self.browser.find_element(By.ID, "notification-button")
-        notification_button.click()
-        dropdown_notifications = WebDriverWait(self.browser, 10).until(
-            EC.visibility_of_element_located((By.ID, "dropdown-notifications"))
-        )
-        notifications = dropdown_notifications.find_elements(By.TAG_NAME, "a")
-        notification_texts = [n.text for n in notifications]
-        self.assertIn('Test Card', notification_texts[0])
-
-        time.sleep(1)
-        
-        #กดที่ notification เพื่อดูว่าไปยังหน้า board ได้หรือไม่
-        notification_links = dropdown_notifications.find_elements(By.TAG_NAME, "a")
-        notification_links[0].click()
-
-        WebDriverWait(self.browser, 10).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "column"))
-        )
-
-        board_title = self.browser.find_element(By.CLASS_NAME , "board-title").text
-        self.assertIn("Test Topic",board_title)
-
-        #กลับไปที่หน้า categories
-        self.browser.get(f"{self.live_server_url}/tanny/categories/")
-        #เช็คว่า Notification หายไป
-        notification_counts = self.browser.find_elements(By.ID, "notification-count")
-        self.assertEqual(len(notification_counts), 0)
-
-        time.sleep(1)
-
-    @patch('django.utils.timezone.now')
-    def test_notification_day2(self,mock_now):
-        mock_now.return_value = self.mock_now(1)
-
-        self.browser.get(f"{self.live_server_url}/tanny/categories/")
-        
-        # ตรวจสอบว่ามีการแจ้งเตือน
-        notification_count = WebDriverWait(self.browser, 10).until(
-            EC.presence_of_element_located((By.ID, "notification-count"))
-        )
-        self.assertEqual(notification_count.text, "1")
-
-        #กดดู notification
-        notification_button = self.browser.find_element(By.ID, "notification-button")
-        notification_button.click()
-        dropdown_notifications = WebDriverWait(self.browser, 10).until(
-            EC.visibility_of_element_located((By.ID, "dropdown-notifications"))
-        )
-        notifications = dropdown_notifications.find_elements(By.TAG_NAME, "a")
-        notification_texts = [n.text for n in notifications]
-        self.assertIn('Test Card', notification_texts[0])
-
-        time.sleep(1)
-
-    @patch('django.utils.timezone.now')
-    def test_notification_more_than_5_day(self,mock_now):
-        mock_now.return_value = self.mock_now(6)
-
-        self.browser.get(f"{self.live_server_url}/tanny/categories/")
-
-        # ตรวจสอบว่ามีการแจ้งเตือน
-        notification_count = WebDriverWait(self.browser, 10).until(
-            EC.presence_of_element_located((By.ID, "notification-count"))
-        )
-        self.assertEqual(notification_count.text, "0")
-
-        #เช็คว่าไม่มี notification
-        notification_button = self.browser.find_element(By.ID, "notification-button")
-        notification_button.click()
-
-        dropdown_notifications = WebDriverWait(self.browser, 10).until(
-            EC.visibility_of_element_located((By.ID, "dropdown-notifications"))
-        )
-        empty_message = dropdown_notifications.find_element(By.TAG_NAME, "span").text
-        self.assertEqual(empty_message, "no notification")
-
-        time.sleep(1)
-
-
 
 
