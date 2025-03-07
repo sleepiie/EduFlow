@@ -391,7 +391,7 @@ async function saveCardChanges() {
                 if(diffDays < 5){
                     dueEl.style.color = "red";
                 } 
-                else if(6 <= diffDays && diffDays <= 12){
+                else if(5 <= diffDays && diffDays <= 12){
                     dueEl.style.color = "#ccb839";
                 }
                 else {
